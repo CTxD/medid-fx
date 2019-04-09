@@ -1,0 +1,9 @@
+-r common  # All common dependencies
+
+# Development specific requirements:
+# Linters:
+prospector[with_mypy]
+pytest
+pytest-cov
+httmock
+connexion[swagger-ui]

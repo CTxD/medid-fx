@@ -1,0 +1,4 @@
+-r common  # All common dependencies
+
+# Production specific requirements:
+connexion

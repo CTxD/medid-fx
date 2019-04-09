@@ -1,0 +1,224 @@
+openapi: 3.0.0
+info:
+  description: Swagger UI for API endpoints defined for MedID-FX
+  version: "1.0.0"
+  title: MedID FX API
+
+servers:
+  - url: /api/v1
+
+paths:
+  /fx/{imageencoding}:
+    get:
+      operationId: "source.api.v1.endpoints.fx_matches"
+      tags:
+        - "Public endpoints"
+      summary: Find best matches of a given pill/tablet
+      description: Given an encoding of an image of a pill/tablet get a list of the best matches.
+      parameters:
+        - in: path
+          name: imageencoding
+          schema:
+            type: string
+            format: byte
+          required: true
+          description: Encoding of image to extract features from
+      responses:
+        '200':
+           $ref: '#/components/responses/MatchResponse'
+        default: # All other responses, e.g. 4xx and 5xx status codes
+          $ref: '#/components/responses/ErrorResponse'
+
+  /medinfo/extended/{name}:
+    get:
+      operationId: "source.api.v1.endpoints.medinfo_extended"
+      tags:
+        - "Public endpoints"
+      summary: Get information about medicine
+      description: More detailed description about medinfo enpoint.
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          required: true
+          description: Name of the medicin to get information about. If omitted a list of all medicin (slim) will be returned.
+      responses:
+        '200':
+          $ref: '#/components/responses/ExtendedResponse'
+        default: # All other responses, e.g. 4xx and 5xx status codes
+          $ref: '#/components/responses/ErrorResponse'
+  
+  /medinfo/slim/:
+    get:
+      operationId: "source.api.v1.endpoints.medinfo_slim"
+      tags:
+        - "Public endpoints"
+      summary: Get information about medicine
+      description: More detailed description about medinfo enpoint.
+      responses:
+        '200':
+          $ref: '#/components/responses/SlimResponse'
+        default: # All other responses, e.g. 4xx and 5xx status codes
+          $ref: '#/components/responses/ErrorResponse'
+
+  /generate/{authtoken}:
+    get:
+      operationId: "source.api.v1.endpoints.generate_model"
+      tags:
+        - "Private endpoints"
+      summary: Generate a new model
+      description: Generate a new model
+      parameters:
+        - in: path
+          name: authtoken
+          schema:
+            type: string
+          required: true
+          description: Authentication token
+      responses:
+        '200':
+          description: Generates a new model
+        '401':
+          description: Unauthorized
+        '403':
+          description: Invalid token
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  
+  /meta/:
+    get:
+      operationId: "source.api.v1.endpoints.meta"
+      tags:
+        - "Public endpoints"
+      summary: Get meta data about the backend, e.g. the current model version.
+      responses:
+        '200': 
+          $ref: '#/components/responses/MetaResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+
+
+components:
+  responses:
+    MetaResponse:
+      description: Meta data about the backend
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MetaSchema'
+
+    MatchResponse:
+      description: Ok
+      content: 
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/MatchSchema'
+    
+    ExtendedResponse:
+      description: A list of medicine
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/ExtendedSchema'
+
+    SlimResponse:
+      description: List of slim info for all drugs
+      content:
+        application/json:
+          schema: 
+            $ref: '#/components/schemas/SlimSchema'
+    
+    ErrorResponse:
+      description: 'Unexpected error'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorSchema'
+
+  schemas:
+    ErrorSchema:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message
+
+    DrugSchema:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: "Describes what kind the drug is (e.g. tablet)"
+        strength:
+          type: string
+          description: "Strength of the pill"
+        imprint:
+          type: array
+          items: 
+            type: string
+          description: "List of distinct imprints on the drug"
+        score:
+          type: string
+          description: "Describes the score of the drug (if any)"
+        color:
+          type: array
+          items: 
+            type: string
+          description: "The colour(s) of the drug"
+        size: 
+          type: string
+          description: "The dimensions of the drug"
+        image:
+          type: string
+          format: byte
+          description: "Byte encoding of the photo of the pill"
+
+    SlimSchema:
+      allOf:
+        - $ref: '#/components/schemas/DrugSchema'
+        - type: object
+          properties:
+            name:
+              type: string
+              description: Name of the pill
+            substance:
+              type: string
+              description: Active substance of the pill
+      
+    MatchSchema:
+      type: array
+      items: 
+        allOf:
+          - $ref: '#/components/schemas/SlimSchema'
+          - type: object
+            properties:
+              confidence:
+                type: number
+                description: Confidence value for the match
+                minimum: 0
+                maximum: 1
+      description: List of results
+        
+    ExtendedSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the pill
+        substance:
+          type: string
+          description: Active substance of the pill
+        drugitems:
+          type: array
+          items: 
+            $ref: '#/components/schemas/DrugSchema'
+      description: Extended results
+
+    MetaSchema:
+      type: object
+      properties:
+        model:
+          type: string
+          description: Version of the current model
+      description: Meta information
