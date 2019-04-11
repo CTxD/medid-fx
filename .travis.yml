@@ -1,11 +1,10 @@
+dist: xenial 
 sudo: false
 language: python
 python: 
   - "3.6" 
 install:
   - make install
-  - pip install codecov
-
+  
 script: make test
-after_success:
-  - codecov
+
