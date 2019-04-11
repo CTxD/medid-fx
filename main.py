@@ -4,7 +4,7 @@ import sys
 
 from typing import Union
 
-from source import config
+from source import config, server
 from install import getuninstalledrequirements, install
 
 
@@ -25,12 +25,6 @@ def main():
         exit()
     print('Everything OK!\r\n')
 
-    logger.info('Starting application.')
-
-    # Start the server
-    from source import server
-    server.start()
-
 
 def checkrequirements() -> bool:
     # Are all requirements installed?
@@ -45,7 +39,8 @@ def checkrequirements() -> bool:
         for req in res:
             print(' - ' + req)
         print(
-            'Run one of the following commands to resolve dependencies:\r\n'
+            '\r\nRun one of the following commands to resolve dependencies:\r\n'
+            f'\tmake isntall\r\n'
             f'\tpip install -r {config.CONFIG["REQPATH"]}\r\n'
             f'\tpython main.py -I'
         )
@@ -102,12 +97,19 @@ def printstatus(status: Union[str, bool]):
     if isinstance(status, str):
         message = "{:<40}".format(status+'...')
     else:
-        message = 'OK!' if status is True else 'Failed'
+        message = "\033[92m OK!\033[00m" if status is True else "\033[91m Failed\033[00m"
         message = message + '\r\n'
-        
+
     sys.stdout.write(message)
     sys.stdout.flush()
 
 
 if __name__ == '__main__':
-    main()
+    main()  
+    logger.info('Starting application.')
+
+    if '--dev' in sys.argv:
+        logger.info('Note: Using -dev flag will execute code in server.development, but will NOT start the server!') # noqa
+        server.development()
+    else:
+        server.Server(server.createapp()).run()
