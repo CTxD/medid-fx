@@ -24,12 +24,12 @@ def get_fsm():
 
 
 # Delegate for /api/v1/fx
-def fx_matches(imageencoding) -> Union[ErrorSchema, MatchSchema]:
+def fx_matches(imageencoding) -> Union[ErrorSchema, MatchSchema]: # pragma: no cover
     return fx.getmatches(imageencoding)
 
 
 # Delegate for /api/v1/medinfo/extended/{name}
-def medinfo_extended(name) -> Union[ErrorSchema, ExtendedSchema]:
+def medinfo_extended(name) -> Union[ErrorSchema, ExtendedSchema]: # pragma: no cover
     return extended.getextended(name)
 
 
@@ -43,11 +43,11 @@ def medinfo_slim() -> Union[ErrorSchema, List[SlimSchema]]:
 
 
 # Delegate for /api/v1/generate/{authtoken}
-def generate_model(authtoken):
+def generate_model(authtoken): # pragma: no cover
     return authtoken, 403
 
 
 # Delegate for /api/v1/meta
-def meta() -> Union[ErrorSchema, MetaSchema]:
+def meta() -> Union[ErrorSchema, MetaSchema]: # pragma: no cover
     import time
     return 'v1.' + str(int(time.time()))
