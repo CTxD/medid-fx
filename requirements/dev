@@ -7,4 +7,4 @@ pytest
 pytest-cov
 httmock
 connexion[swagger-ui]
-mockfirestore
+mock-firestore
