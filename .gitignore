@@ -91,3 +91,6 @@
 # certificate
 *medid-certificate.json
 *medid-production-certificate.json
+
+
+**/.DS_Store
