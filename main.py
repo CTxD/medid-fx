@@ -18,7 +18,6 @@ logger = logging.getLogger('source')
 
 
 def main():
-
     if '-I' in sys.argv:
         install()
 
