@@ -22,9 +22,8 @@ def get_fsm():
 
     return _firestore_repo
 
+
 # Delegate for /api/v1/fx
-
-
 def fx_matches(imageencoding) -> Union[ErrorSchema, MatchSchema]:
     return fx.getmatches(imageencoding)
 
@@ -38,9 +37,9 @@ def medinfo_extended(name) -> Union[ErrorSchema, ExtendedSchema]:
 def medinfo_slim() -> Union[ErrorSchema, List[SlimSchema]]:
     try:
         fsm = get_fsm()
-        return fsm.get_all_pills_slim()
+        return fsm.get_all_pills_slim(), 200
     except Exception as e:
-        return ErrorSchema(message=str(e))
+        return ErrorSchema(message=str(e)), 500
 
 
 # Delegate for /api/v1/generate/{authtoken}
