@@ -8,7 +8,7 @@ from source import config, server
 from install import getuninstalledrequirements, install
 
 
-# The logger is configured in source/__init__.py, so make sure to import something from source 
+# The logger is configured in source/__init__.py, so make sure to import something from source
 # before getting a logger instance. This way we use that configuration instead of creating a new,
 # default configuration. Also, the name of the logger must be 'source' (instead of __name__) when
 # getting a logger instance here, as it will manipulate the logger to believe this file is part of
@@ -35,7 +35,8 @@ def checkrequirements() -> bool:
     printstatus(status)
 
     if not status:
-        print(f'\r\nThe following package{"s" if len(res) > 1 else ""} needs to be installed:')
+        print(
+            f'\r\nThe following package{"s" if len(res) > 1 else ""} needs to be installed:')
         for req in res:
             print(' - ' + req)
         print(
@@ -71,14 +72,14 @@ def checkconfig() -> bool:
         if os.path.exists(os.path.join(os.getcwd(), 'config.cfg.example')):
             extra = extra + '\r\nA template config.cfg file exists. Make a copy of ' \
                 'config.cfg.example template file, renaming it config.cfg.'
-            
+
     printstatus(status)
-    
+
     if extra:
         print(extra)
 
     return status
- 
+
 
 def resolvedependencies() -> bool:
     if not checkconfig():
@@ -88,7 +89,7 @@ def resolvedependencies() -> bool:
 
     if not checkrequirements() or not checkconnection():
         return False
-    
+
     return True
 
 
