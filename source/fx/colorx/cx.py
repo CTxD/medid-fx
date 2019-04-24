@@ -1,7 +1,7 @@
-from .labmap import map_color
+from .colormap import map_hex_color_to_xterm_color
 
 
 def main():
-    res = map_color("#f97924")
+    res = map_hex_color_to_xterm_color("#f97924")
 
     print(res)
