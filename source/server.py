@@ -5,6 +5,7 @@ import connexion
 from gunicorn.app.base import BaseApplication
 
 from .config import CONFIG
+from .fx.colorx import cx
 
 logger = logging.getLogger(__name__)
 
@@ -54,5 +55,6 @@ def development():
     # ## DEVELOPMENT CODE GOES HERE ## #
     # Example:
     # fx.extractfeatures()
+    cx.main()
     # ## END OF DEVELOPMENT CODE ## #
 
