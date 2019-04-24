@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-
+from source.fx.preprocessing import crop
 from typing import Union
 
 from source import config
@@ -107,7 +107,6 @@ def printstatus(status: Union[str, bool]):
         
     sys.stdout.write(message)
     sys.stdout.flush()
-
 
 if __name__ == '__main__':
     main()
