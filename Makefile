@@ -8,4 +8,4 @@ main:
 	python3 main.py
 
 dev:
-	python3 main.py -dev
+	python3 main.py --dev
