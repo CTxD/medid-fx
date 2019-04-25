@@ -1,2 +1,4 @@
 # All common requirements for the project:
 flask
+gunicorn
+firebase-admin

@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-from sys import executable
+from sys import executable, argv
 from typing import List, Dict
 
 from source.config import readconfig, CONFIG
@@ -54,12 +54,12 @@ def install(requirements: List[str] = None):
     
     if not requirements:
         print('All requirements are already installed.')
-
-    for req in requirements:
-        try:
-            subprocess.check_call([executable, '-m', 'pip', 'install', req])
-        except Exception as e:
-            print(e)
+        exit()
+    
+    try:
+        subprocess.check_call([executable, '-m', 'pip', 'install', '-r', CONFIG['REQPATH']])
+    except Exception as e:
+        print(e)
 
 
 if __name__ == '__main__':

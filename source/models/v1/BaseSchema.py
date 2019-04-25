@@ -2,7 +2,7 @@ from typing import List
 
 from . import PropertyDescriptor
 
- 
+
 class BaseSchema():
     def __init__(self, properties: List[PropertyDescriptor], **kwargs):
         for propdesc in properties:
@@ -17,5 +17,5 @@ class BaseSchema():
                         f'{type(kwargs[propkey])} has been provided.'
                     )
                 propvalue = kwargs[propkey]
-            
+
             setattr(self, propkey, propvalue)

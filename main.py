@@ -4,11 +4,11 @@ import sys
 
 from typing import Union
 
-from source import config
+from source import config, server
 from install import getuninstalledrequirements, install
 
 
-# The logger is configured in source/__init__.py, so make sure to import something from source 
+# The logger is configured in source/__init__.py, so make sure to import something from source
 # before getting a logger instance. This way we use that configuration instead of creating a new,
 # default configuration. Also, the name of the logger must be 'source' (instead of __name__) when
 # getting a logger instance here, as it will manipulate the logger to believe this file is part of
@@ -25,12 +25,6 @@ def main():
         exit()
     print('Everything OK!\r\n')
 
-    logger.info('Starting application.')
-
-    # Start the server
-    from source import server
-    server.start()
-
 
 def checkrequirements() -> bool:
     # Are all requirements installed?
@@ -41,11 +35,13 @@ def checkrequirements() -> bool:
     printstatus(status)
 
     if not status:
-        print(f'\r\nThe following package{"s" if len(res) > 1 else ""} needs to be installed:')
+        print(
+            f'\r\nThe following package{"s" if len(res) > 1 else ""} needs to be installed:')
         for req in res:
             print(' - ' + req)
         print(
-            'Run one of the following commands to resolve dependencies:\r\n'
+            '\r\nRun one of the following commands to resolve dependencies:\r\n'
+            f'\tmake isntall\r\n'
             f'\tpip install -r {config.CONFIG["REQPATH"]}\r\n'
             f'\tpython main.py -I'
         )
@@ -76,14 +72,14 @@ def checkconfig() -> bool:
         if os.path.exists(os.path.join(os.getcwd(), 'config.cfg.example')):
             extra = extra + '\r\nA template config.cfg file exists. Make a copy of ' \
                 'config.cfg.example template file, renaming it config.cfg.'
-            
+
     printstatus(status)
-    
+
     if extra:
         print(extra)
 
     return status
- 
+
 
 def resolvedependencies() -> bool:
     if not checkconfig():
@@ -93,7 +89,7 @@ def resolvedependencies() -> bool:
 
     if not checkrequirements() or not checkconnection():
         return False
-    
+
     return True
 
 
@@ -102,12 +98,19 @@ def printstatus(status: Union[str, bool]):
     if isinstance(status, str):
         message = "{:<40}".format(status+'...')
     else:
-        message = 'OK!' if status is True else 'Failed'
+        message = "\033[92m OK!\033[00m" if status is True else "\033[91m Failed\033[00m"
         message = message + '\r\n'
-        
+
     sys.stdout.write(message)
     sys.stdout.flush()
 
 
 if __name__ == '__main__':
-    main()
+    main()  
+    logger.info('Starting application.')
+
+    if '--dev' in sys.argv:
+        logger.info('Note: Using -dev flag will execute code in server.development, but will NOT start the server!') # noqa
+        server.development()
+    else:
+        server.Server(server.createapp()).run()
