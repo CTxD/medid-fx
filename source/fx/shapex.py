@@ -33,16 +33,6 @@ class ShapePreprocessor:
 
         return crop_left, crop_right
 
-    def shape_contour(self, img):
-        img1, img2 = crop_image(img)
-        img1 = cv.GaussianBlur(img1, (5, 5), 0)
-        img2 = cv.GaussianBlur(img2, (5, 5), 0)
-        
-        contour1 = get_contours(img1)
-        contour2 = get_contours(img2)
-        
-        return contour1, contour2
-
     def get_contours(self, img):
         edges = cv.Canny(img, 200, 600)
         contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
