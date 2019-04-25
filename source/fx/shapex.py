@@ -55,7 +55,7 @@ class ShapeDescriptor:
     def __init__(self):
         self.preprocessor = ShapePreprocessor()
 
-    def calc_hu_moments_from_img(img):
+    def calc_hu_moments_from_img(self, img):
         img, snd_img = self.preprocessor.crop_image(img)
 
         _, edges, _ = self.preprocessor.get_contours(img)
@@ -77,20 +77,14 @@ class ShapeDescriptor:
         return huMoments
 
     def calc_cosine_similarity(self, hu, snd_hu):
+        # Convert to np arrays
         arr = np.array(hu)
         snd_arr = np.array(snd_hu)
-
+        
+        # Calculate the dot product and normalize
         dot = np.dot(arr, snd_arr)
         norm = np.linalg.norm(arr)
         snd_norm = np.linalg.norm(snd_arr)
     
+        # Return the similarity
         return dot / (norm * snd_norm)
-
-shape_descriptor = ShapeDescriptor()
-shape_processor = ShapePreprocessor()
-
-img = shape_processor.load_image_from_file("../images/1.jpg")
-
-hu, snd_hu = shape_descriptor.calc_hu_moments_from_img(img)
-print("Hu: ", hu, snd_hu)
-print("Sim: ", shape_descriptor.calc_cosine_similarity(hu, snd_hu))
