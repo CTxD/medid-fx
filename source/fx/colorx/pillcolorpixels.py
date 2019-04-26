@@ -4,15 +4,15 @@ from typing import List
 import cv2 as cv
 import numpy as np
 from colormath.color_objects import sRGBColor
- 
 
-def getcolorpixels(imagepath='resources/betolvex.jpg') -> List[sRGBColor]:
-    c1, _ = shape_contour(imagepath)
+
+def getcolorpixels(imagepath: str) -> List[sRGBColor]:
     img1, _ = crop_image(imagepath, grayscale=False)
+    c1, _ = shape_contour(imagepath)  
 
     # Add alpha component 
     img = cv.cvtColor(img1, cv.COLOR_RGB2RGBA)
-    
+
     # Create a black layer in the size of the image (with RGBA values for pixels)
     mask: np.ndarray = np.zeros_like(img) 
 
@@ -33,17 +33,24 @@ def getcolorpixels(imagepath='resources/betolvex.jpg') -> List[sRGBColor]:
 
     # Finally, convert each pixel value to a sRGB colormath object, removing the alpha component
     result: List[sRGBColor] = []
+
     for pixel in coloredpixels:
+        r, g, b, _ = rgba(pixel)
         result.append(
             sRGBColor(
-                rgb_r=pixel[0], 
-                rgb_g=pixel[1], 
-                rgb_b=pixel[2],
+                rgb_r=r, 
+                rgb_g=g, 
+                rgb_b=b,
                 is_upscaled=True
             )
         )
 
     return result
+
+
+# Extract RGBA components of a pixel
+def rgba(pixel):
+    return pixel[2], pixel[1], pixel[0], pixel[3]
 
 
 # ####                               PETERS ALGO!                                ##### 
