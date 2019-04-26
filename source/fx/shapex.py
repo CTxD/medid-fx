@@ -1,10 +1,7 @@
 import numpy as np
 import cv2 as cv
-from matplotlib import pyplot as plt
 import random as rng
 import math
-from scipy.spatial.distance import cdist, cosine
-from scipy.optimize import linear_sum_assignment
 
 class ShapePreprocessor:
     def __init__(self):
