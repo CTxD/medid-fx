@@ -1,5 +1,5 @@
 test:
-	pytest -v --cov=source tests/ --cov-report term --cov-report html --show-capture=no
+	pytest -v --cov=source tests/ --cov-report term --cov-report html --show-capture=no --disable-pytest-warnings
 
 install:
 	python3 install.py

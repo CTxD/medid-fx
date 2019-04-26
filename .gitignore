@@ -92,6 +92,8 @@
 *medid-certificate.json
 *medid-production-certificate.json
 
+# Assets
+**/images
 
 **/.DS_Store
 
