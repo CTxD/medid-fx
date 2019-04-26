@@ -4,6 +4,17 @@ from typing import List
 import cv2 as cv
 import numpy as np
 from colormath.color_objects import sRGBColor
+from matplotlib import pyplot as plt
+
+
+def showimgs(titles, images): # pragma: no cover
+    for i in range(len(images)): # noqa
+        plt.subplot(2, 2, i+1)
+        plt.imshow(images[i])
+        plt.title(titles[i])
+        plt.xticks([])
+        plt.yticks([])
+    plt.show()
 
 
 def getcolorpixels(imagepath: str) -> List[sRGBColor]:
@@ -12,7 +23,7 @@ def getcolorpixels(imagepath: str) -> List[sRGBColor]:
 
     # Add alpha component 
     img = cv.cvtColor(img1, cv.COLOR_RGB2RGBA)
-
+    
     # Create a black layer in the size of the image (with RGBA values for pixels)
     mask: np.ndarray = np.zeros_like(img) 
 
@@ -23,6 +34,8 @@ def getcolorpixels(imagepath: str) -> List[sRGBColor]:
     # is white.
     out: np.ndarray = np.zeros_like(img) 
     out[mask == (255, 255, 255, 1)] = img[mask == (255, 255, 255, 1)]
+
+    # showimgs(['img1', 'img', 'mask (transparent)', 'out'], [img1, img, mask, out])
 
     # Flatten the nD array of pixels into a 2D array of pixels with 4 values (RGBA).
     flatpixels: np.ndarray = out.flatten().reshape((-1, 4))
@@ -35,22 +48,16 @@ def getcolorpixels(imagepath: str) -> List[sRGBColor]:
     result: List[sRGBColor] = []
 
     for pixel in coloredpixels:
-        r, g, b, _ = rgba(pixel)
         result.append(
             sRGBColor(
-                rgb_r=r, 
-                rgb_g=g, 
-                rgb_b=b,
+                rgb_r=pixel[0], 
+                rgb_g=pixel[1], 
+                rgb_b=pixel[2],
                 is_upscaled=True
             )
         )
 
     return result
-
-
-# Extract RGBA components of a pixel
-def rgba(pixel):
-    return pixel[2], pixel[1], pixel[0], pixel[3]
 
 
 # ####                               PETERS ALGO!                                ##### 
@@ -73,7 +80,7 @@ def crop_image(file, grayscale=True): # pragma: no cover # noqa
         lab_planes[0] = clahe.apply(lab_planes[0])
         height, width = lab_planes[0].shape
         lab = cv.merge(lab_planes)
-        img = cv.cvtColor(lab, cv.COLOR_LAB2RGB)
+        img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
     else:
         img = cv.imread(file, 0)
         clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -81,13 +88,13 @@ def crop_image(file, grayscale=True): # pragma: no cover # noqa
 
         height, width = img.shape
 
-    start_x1 = 60
-    end_x1 = int(width / 2 - 35)
-    start_x2 = int(width / 2 + 35)
-    end_x2 = width - 60
+    start_x1 = 25
+    end_x1 = int(width / 2)
+    start_x2 = int(width / 2 + 5)
+    end_x2 = width - 25
 
-    start_y = 60
-    end_y = int(start_y + height - 90)
+    start_y = 45
+    end_y = int(start_y + height - 65)
 
     crop_left = img[start_y: end_y, start_x1: end_x1]
     crop_right = img[start_y: end_y, start_x2: end_x2]

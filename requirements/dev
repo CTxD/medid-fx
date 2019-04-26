@@ -9,3 +9,4 @@ httmock
 connexion[swagger-ui]
 mock-firestore
 Pillow
+matplotlib

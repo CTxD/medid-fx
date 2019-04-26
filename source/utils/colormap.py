@@ -22,7 +22,6 @@ def main():
 
 def img_creater(array_of_colors: [sRGBColor], size: int, filename: str):
     i = math.ceil(math.sqrt(len(array_of_colors)))
-    print("i is; ", i, len(array_of_colors))
     
     img = Image.new("RGBA", (i*size, i*size), color='black')
     draw = ImageDraw.Draw(img)
@@ -40,7 +39,6 @@ def img_creater(array_of_colors: [sRGBColor], size: int, filename: str):
         c = color.get_rgb_hex()
 
         draw.rectangle(((0+x1, x2), ((size+y1, y2))), fill=c)
-        print("draw", counter, color, x1, x2, y1, y2)
         x1 += size
         y1 += size
 
