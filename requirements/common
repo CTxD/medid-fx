@@ -2,4 +2,5 @@
 flask
 gunicorn
 firebase-admin
+colormath
 opencv-python
