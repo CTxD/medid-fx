@@ -11,7 +11,12 @@ class ShapePreprocessor:
         rng.seed(12345)
 
     def load_image_from_file(self, filePath):
-        return cv.samples.findFile(filePath)
+        try:
+            img = cv.samples.findFile(filePath)
+        except:
+            raise Exception("Image could not be loaded from file")
+        
+        return img
 
     def crop_image(self, img):
         img = cv.imread(img, 0)
