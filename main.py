@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-from source.fx.preprocessing import crop
 from typing import Union
 
 from source import config
