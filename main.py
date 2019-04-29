@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-
+from source.fx.formatdata.format import asd 
 from typing import Union
 
 from source import config, server
@@ -108,9 +108,11 @@ def printstatus(status: Union[str, bool]):
 if __name__ == '__main__':
     main()  
     logger.info('Starting application.')
-
+    asd()
     if '--dev' in sys.argv:
         logger.info('Note: Using -dev flag will execute code in server.development, but will NOT start the server!') # noqa
         server.development()
     else:
         server.Server(server.createapp()).run()
+    
+    

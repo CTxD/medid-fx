@@ -1,8 +1,8 @@
 import os
 import logging
-
+# from source.models.v1 import FeatureVectorSchema
 from firebase_admin import credentials, firestore, initialize_app
-from ..models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema  # type: ignore # noqa
+from source.models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema  # type: ignore # noqa
 
 from source.config import CONFIG
 
@@ -48,3 +48,6 @@ class FBManager:
             pills.append(pill.to_dict())
 
         return pills
+
+    # def add_or_update(self, collection_id: str, feature_vector_obj: FeatureVectorSchema.FeatureVectorSchema): # noqa
+    #     self.db.collection(collection_id).document(feature_vector_obj.pillname)
