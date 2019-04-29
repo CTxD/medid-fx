@@ -3,6 +3,7 @@ import cv2 as cv
 import random as rng
 import math
 
+
 class ShapePreprocessor:
     def __init__(self):
         rng.seed(12345)
@@ -12,6 +13,15 @@ class ShapePreprocessor:
             img = cv.samples.findFile(filePath)
         except:
             raise Exception("Image could not be loaded from file")
+        
+        return img
+
+    def load_image_from_bytestring(self, imgstring):
+        try:
+            nparr = np.fromstring(imgstring, np.uint8)
+            img = cv.imdecode(nparr, cv.IMREAD_COLOR)
+        except:
+            raise Exception("Image could not be decoded from bytestring")
         
         return img
 

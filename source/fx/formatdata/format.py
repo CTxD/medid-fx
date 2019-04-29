@@ -1,16 +1,19 @@
 from source.repository.firestore import FBManager
+from source.fx import shapex
 
 
-def maketable():
+def hasimage(pill):
+    return pill["image"] is not None and pill["image"] and not isinstance(pill['image'][0], dict)  
+
+
+def getrelevantpills():
     fb = FBManager()
-    
+    allpils = fb.get_all_pills_slim()
+    return filter(hasimage, allpils)
 
-def asd():
-    fb = FBManager() 
-    asdasd = fb.get_all_pills_slim()
-    print(asdasd[0])
-    print(asdasd[1])
-    print(asdasd[2])
-    print(asdasd[3])
-    print(asdasd[4])
-    print("The amount of all pill are: ", len(asdasd))
+
+def makeschema():
+    pills = getrelevantpills()
+    s = shapex.ShapePreprocessor()
+    for pill in pills:
+        img = s.load_image_from_bytestring(pill["image"][0].decode("utf-8"))
