@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-
 from typing import Union
 
 from source import config, server
@@ -103,7 +102,6 @@ def printstatus(status: Union[str, bool]):
 
     sys.stdout.write(message)
     sys.stdout.flush()
-
 
 if __name__ == '__main__':
     main()  
