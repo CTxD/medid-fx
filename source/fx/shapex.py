@@ -15,32 +15,50 @@ class ShapePreprocessor:
         
         return img
 
-    def crop_image(self, img):
-        img = cv.imread(img, 0)
-        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    def crop_image(self, imgpath, grayscale=True): # pragma: no cover # noqa
+    """
+    Takes as input the path to a pro.medicin.dk image and returns the two cropped images as numpy
+    arrays.
+
+    Crops out the ruler on the image and splits the image in two through the middle.
+    """
+    clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    
+    if grayscale:
+        img = cv.imread(imgpath, 0)
         img = clahe.apply(img)
-
         height, width = img.shape
+        img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
+    else:
+        img = cv.imread(imgpath)
+        lab = cv.cvtColor(img, cv.COLOR_RGB2LAB)
+        lab_planes = cv.split(lab)
+        lab_planes[0] = clahe.apply(lab_planes[0])
+        height, width = lab_planes[0].shape
+        lab = cv.merge(lab_planes)
+        img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
 
-        start_x1 = 25
-        end_x1 = int(width / 2)
-        start_x2 = end_x1 + 5
-        end_x2 = width - 25
+    start_x1 = 25
+    end_x1 = int(width / 2)
+    start_x2 = int(end_x1 + 5)
+    end_x2 = int(width - 25)
 
-        start_y = 45
-        end_y = int(start_y + height - 65)
+    start_y = 45
+    end_y = int(start_y + height - 65)
 
-        crop_left = img[start_y: end_y, start_x1: end_x1]
-        crop_right = img[start_y: end_y, start_x2: end_x2]
+    crop_left = img[start_y: end_y, start_x1: end_x1]
+    crop_right = img[start_y: end_y, start_x2: end_x2]
 
-        return crop_left, crop_right
+    return crop_left, crop_right
 
     def get_contours(self, img):
-        edges = cv.Canny(img, 200, 600)
-        contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-        epsilon = 0.001*cv.arcLength(contours[0], True)
-        approx = cv.approxPolyDP(contours[0], epsilon, True)
+        kernel = np.ones((7,7),np.float32)/5
+        img = cv.filter2D(img,-1,kernel)
 
+        edges = cv.Canny(img, 100, 500)
+        contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+        epsilon = 0.0001*cv.arcLength(contours[0], True)
+        approx = cv.approxPolyDP(contours[0], epsilon, True)
         return [approx], edges, hierarchy
 
 class ShapeDescriptor:
