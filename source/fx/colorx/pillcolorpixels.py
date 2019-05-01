@@ -4,41 +4,40 @@ from typing import List
 import cv2 as cv
 import numpy as np
 from colormath.color_objects import sRGBColor
-from matplotlib import pyplot as plt
+
+from ..utils import showimg
 
 
-def showimgs(titles, images): # pragma: no cover
-    for i in range(len(images)): # noqa
-        plt.subplot(2, 2, i+1)
-        plt.imshow(images[i])
-        plt.title(titles[i])
-        plt.xticks([])
-        plt.yticks([])
-    plt.show()
-
-
-def getcolorpixels(imagepath: str) -> List[sRGBColor]:
-    img1, _ = crop_image(imagepath, grayscale=False)
-    c1, _ = shape_contour(imagepath)  
+def getcolorpixels(imagepath: str, skip: int, downscale: int) -> List[sRGBColor]:
+    contours, _, _ = get_contours(cv.GaussianBlur(cv.imread(imagepath, 0), (5, 5), 0))
 
     # Add alpha component 
-    img = cv.cvtColor(img1, cv.COLOR_RGB2RGBA)
-    
+    img = cv.imread(imagepath)# , _ = cropproimg.crop_image(imagepath, grayscale=False)
+    img = cv.cvtColor(img, cv.COLOR_RGB2BGRA)
+
     # Create a black layer in the size of the image (with RGBA values for pixels)
     mask: np.ndarray = np.zeros_like(img) 
 
     # Draw white on the mask layer where the pill is located (through the contour c1)
-    cv.drawContours(mask, c1[0], 0, (255, 255, 255, 1), -1) 
+    cv.drawContours(mask, contours, 0, (255, 255, 255, 1), -1) 
     
     # Create a new layer and fill it with information from img in all pixels where the mask layer 
-    # is white.
+    # is white
     out: np.ndarray = np.zeros_like(img) 
     out[mask == (255, 255, 255, 1)] = img[mask == (255, 255, 255, 1)]
 
-    # showimgs(['img1', 'img', 'mask (transparent)', 'out'], [img1, img, mask, out])
+    # Resize image to 32x32 and then back to original size again in order to pixalate the image
+    # We do this in order to reduce the number of unique pixels to 1024
+    scaledout = cv.resize(out, (downscale, downscale), interpolation=cv.INTER_AREA)
+
+    # showimg.showimgs(
+    #     ['img', 'out', 'contourdrawing', 'scaled'],
+    #     [img, out, showimg.get_contour_drawing(contours, edges, hierarchy), scaledout]
+    # )
+    # exit()
 
     # Flatten the nD array of pixels into a 2D array of pixels with 4 values (RGBA).
-    flatpixels: np.ndarray = out.flatten().reshape((-1, 4))
+    flatpixels: np.ndarray = scaledout.flatten().reshape((-1, 4))
 
     # Filter out all pixels which are colored using nparray boolean index matching.
     # Basically we ignore all pixels with an alpha value of 0, as these belong to the mask layer.
@@ -47,7 +46,11 @@ def getcolorpixels(imagepath: str) -> List[sRGBColor]:
     # Finally, convert each pixel value to a sRGB colormath object, removing the alpha component
     result: List[sRGBColor] = []
 
-    for pixel in coloredpixels:
+
+    for index in range(0, len(coloredpixels)):
+        if skip >= 0 and index % skip != 0:
+            continue
+        pixel = coloredpixels[index]
         result.append(
             sRGBColor(
                 rgb_r=pixel[0], 
@@ -62,50 +65,12 @@ def getcolorpixels(imagepath: str) -> List[sRGBColor]:
 
 # ####                               PETERS ALGO!                                ##### 
 # SLET HERFRA NÅR DET ER IMPLEMENTERET I FX AF PETER OG BRUG DE IMPLEMENTATIONER I STEDET! #
-def shape_contour(file): # pragma: no cover
-    img1, img2 = crop_image(file)
-    img1 = cv.GaussianBlur(img1, (5, 5), 0)
-    img2 = cv.GaussianBlur(img2, (5, 5), 0)
-    contour1 = get_contours(img1)
-    contour2 = get_contours(img2)
-    return contour1, contour2
-
-
-def crop_image(file, grayscale=True): # pragma: no cover # noqa
-    if not grayscale:
-        img = cv.imread(file)
-        lab = cv.cvtColor(img, cv.COLOR_RGB2LAB)
-        lab_planes = cv.split(lab)
-        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        lab_planes[0] = clahe.apply(lab_planes[0])
-        height, width = lab_planes[0].shape
-        lab = cv.merge(lab_planes)
-        img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
-    else:
-        img = cv.imread(file, 0)
-        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        img = clahe.apply(img)
-
-        height, width = img.shape
-
-    start_x1 = 25
-    end_x1 = int(width / 2)
-    start_x2 = int(width / 2 + 5)
-    end_x2 = width - 25
-
-    start_y = 45
-    end_y = int(start_y + height - 65)
-
-    crop_left = img[start_y: end_y, start_x1: end_x1]
-    crop_right = img[start_y: end_y, start_x2: end_x2]
-
-    return crop_left, crop_right
-
-
 def get_contours(img): # pragma: no cover
     edges = cv.Canny(img, 200, 600)
-    contours, hierarchy = cv.findContours(
-        edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-    epsilon = 0.001*cv.arcLength(contours[0], True)
+    contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    epsilon = 0.0001*cv.arcLength(contours[0], True)
     approx = cv.approxPolyDP(contours[0], epsilon, True)
+    
     return [approx], edges, hierarchy
+
+

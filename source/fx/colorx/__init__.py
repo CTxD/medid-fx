@@ -1,1 +1,1 @@
-from .colormap_resources import lab_objects
+from .colormap_resources import six_bit_lab, six_bit_hex, eight_bit_hex, eight_bit_lab

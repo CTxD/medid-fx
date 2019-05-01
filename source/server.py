@@ -1,11 +1,13 @@
 import os
 import logging
+import base64
 
 import connexion
 from gunicorn.app.base import BaseApplication
 
 from .config import CONFIG
 from .fx.colorx import cx
+from .fx import fx
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +57,8 @@ def development():
     # ## DEVELOPMENT CODE GOES HERE ## #
     # Example:
     # fx.extractfeatures()
-    cx.main()
+    with open('resources/fluox_right.jpg', mode='rb') as f:
+        enc = base64.b64encode(f.read())
+        fx.m(enc, 'fluox')
     # ## END OF DEVELOPMENT CODE ## #
 
