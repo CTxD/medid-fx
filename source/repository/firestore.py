@@ -17,6 +17,33 @@ class FBManager:
         )
         self.db = firestore.client(initialize_app(certificate))
 
+    def _convert_obj_to_dict(self, obj):
+        class_dict = {}
+
+        def parsekeyvalue(key, value):
+            if key.startswith('__'):
+                return None
+            if callable(value):
+                return None
+            if isinstance(value, list):
+                newattrvalue = []
+                for oldvalue in value:
+                    if isinstance(oldvalue, (str, int, float, bool, bytes)):
+                        newattrvalue.append(oldvalue)
+                    else:
+                        newattrvalue.append(self._convert_obj_to_dict(oldvalue))
+                value = newattrvalue
+            return value
+        
+        for attr in dir(obj):
+            value = parsekeyvalue(attr, getattr(obj, attr))
+            if value is None:
+                continue
+            class_dict[attr] = value
+        return class_dict
+
+
+
     def get_specific_pill(self, document_id: str):
         print(self.db.collection("pills").document(document_id).get().to_dict())
         return self.db.collection("pills").document(document_id).get().to_dict()
@@ -49,5 +76,6 @@ class FBManager:
 
         return pills
 
-    # def add_or_update(self, collection_id: str, feature_vector_obj: FeatureVectorSchema.FeatureVectorSchema): # noqa
-    #     self.db.collection(collection_id).document(feature_vector_obj.pillname)
+    def add_or_update(self, collection_id: str, pill_feature: PillFeatureSchema.PillFeatureSchema): # noqa
+        temp = self._convert_obj_to_dict(pill_feature)
+        self.db.collection(collection_id).document(pill_feature.pillname).set(temp)

@@ -1,4 +1,7 @@
 {
-    "python.pythonPath": "/home/teitur/.virtualenvs/fx/bin/python",
-    "python.linting.prospectorEnabled": true
+    "python.pythonPath": "/usr/sbin/python",
+    "python.linting.prospectorEnabled": false,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.linting.enabled": true
 }

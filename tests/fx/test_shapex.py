@@ -19,7 +19,7 @@ def test_load_image_from_file_on_error():
 
 def test_load_image_from_file_on_success():
     result = shape_preprocessor.load_image_from_file("tests/images/pilltest1.jpg")
-    assert type(result) == str
+    assert type(result) == np.ndarray
 
 # Test crop_image function - on error and success
 def test_crop_image_on_success_returns_two_images():
