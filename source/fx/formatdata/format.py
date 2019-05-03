@@ -20,6 +20,3 @@ def buildmodel():
     for pill in pills:
         img = s.load_image_from_bytestring(pill["image"][0].decode("utf-8"))
         hm1, hm2 = sd.calc_hu_moments_from_img(img)
-        if hm1 is None or hm2 is None:
-                print(pill)
-        #fb.add_or_update()

@@ -76,6 +76,6 @@ class FBManager:
 
         return pills
 
-    def add_or_update(self, collection_id: str, pill_feature: PillFeatureSchema.PillFeatureSchema): # noqa
+    """ def add_or_update(self, collection_id: str, pill_feature: PillFeatureSchema.PillFeatureSchema): # noqa
         temp = self._convert_obj_to_dict(pill_feature)
-        self.db.collection(collection_id).document(pill_feature.pillname).set(temp)
+        self.db.collection(collection_id).document(pill_feature.pillname).set(temp) """
