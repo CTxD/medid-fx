@@ -16,7 +16,7 @@ def m(imageencoding: str, imagedescription: str = ''):
             'delta_e': 1976,
             'colorbit': 6,
             'downscale': 64,
-            'skip': 4,
+            'white_threshold': 10,
             'desc': imagedescription
         }
         cx.getcxmap(imgpath, **cxoptions)

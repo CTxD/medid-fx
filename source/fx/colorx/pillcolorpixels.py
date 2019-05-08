@@ -6,13 +6,26 @@ import numpy as np
 from colormath.color_objects import sRGBColor
 
 from ..utils import showimg
+from ..shapex import ShapePreprocessor 
 
 
-def getcolorpixels(imagepath: str, skip: int, downscale: int) -> List[sRGBColor]:
-    contours, _, _ = get_contours(cv.GaussianBlur(cv.imread(imagepath, 0), (5, 5), 0))
+def getcolorpixels(imagepath: str, downscale: int) -> List[np.array]:
+    out = _extractpill(imagepath)
+
+    coloredpixels = processpillimage(out, downscale)
+
+    return coloredpixels
+
+
+def _extractpill(imagepath: str) -> np.ndarray:
+    blurimg = cv.GaussianBlur(cv.imread(imagepath, 0), (5, 5), 0)
+
+    erodedblurimg = cv.erode(blurimg, np.ones((17, 17), np.uint8), iterations=1)
+
+    contours, _, _ = ShapePreprocessor().get_contours(erodedblurimg)
 
     # Add alpha component 
-    img = cv.imread(imagepath)# , _ = cropproimg.crop_image(imagepath, grayscale=False)
+    img = cv.imread(imagepath)
     img = cv.cvtColor(img, cv.COLOR_RGB2BGRA)
 
     # Create a black layer in the size of the image (with RGBA values for pixels)
@@ -26,16 +39,21 @@ def getcolorpixels(imagepath: str, skip: int, downscale: int) -> List[sRGBColor]
     out: np.ndarray = np.zeros_like(img) 
     out[mask == (255, 255, 255, 1)] = img[mask == (255, 255, 255, 1)]
 
+    return out
+
+
+def processpillimage(src: np.ndarray, downscale: int) -> np.ndarray:
+    # Erosion and dilation is implemented with inspiration from 
+    # https://www.geeksforgeeks.org/erosion-dilation-images-using-opencv-python/
+    kernel = np.ones((5, 5), np.uint8) 
+    
+    img_erosion = cv.erode(src, kernel, iterations=2) 
+    img_dilation = cv.dilate(img_erosion, kernel, iterations=2)
+    
     # Resize image to 32x32 and then back to original size again in order to pixalate the image
     # We do this in order to reduce the number of unique pixels to 1024
-    scaledout = cv.resize(out, (downscale, downscale), interpolation=cv.INTER_AREA)
-
-    # showimg.showimgs(
-    #     ['img', 'out', 'contourdrawing', 'scaled'],
-    #     [img, out, showimg.get_contour_drawing(contours, edges, hierarchy), scaledout]
-    # )
-    # exit()
-
+    scaledout = cv.resize(img_dilation, (downscale, downscale), interpolation=cv.INTER_AREA)
+    
     # Flatten the nD array of pixels into a 2D array of pixels with 4 values (RGBA).
     flatpixels: np.ndarray = scaledout.flatten().reshape((-1, 4))
 
@@ -43,34 +61,21 @@ def getcolorpixels(imagepath: str, skip: int, downscale: int) -> List[sRGBColor]
     # Basically we ignore all pixels with an alpha value of 0, as these belong to the mask layer.
     coloredpixels: np.ndarray = flatpixels[flatpixels[:, 0] != 0]
 
-    # Finally, convert each pixel value to a sRGB colormath object, removing the alpha component
-    result: List[sRGBColor] = []
+    return coloredpixels
 
 
-    for index in range(0, len(coloredpixels)):
-        if skip >= 0 and index % skip != 0:
-            continue
-        pixel = coloredpixels[index]
-        result.append(
-            sRGBColor(
-                rgb_r=pixel[0], 
-                rgb_g=pixel[1], 
-                rgb_b=pixel[2],
-                is_upscaled=True
-            )
-        )
-
-    return result
-
-
-# ####                               PETERS ALGO!                                ##### 
-# SLET HERFRA NÅR DET ER IMPLEMENTERET I FX AF PETER OG BRUG DE IMPLEMENTATIONER I STEDET! #
-def get_contours(img): # pragma: no cover
-    edges = cv.Canny(img, 200, 600)
-    contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-    epsilon = 0.0001*cv.arcLength(contours[0], True)
-    approx = cv.approxPolyDP(contours[0], epsilon, True)
+def grayscalecolorchannel(src: np.ndarray, index: int):
+    result = []
+    for row in src:
+        newrow = []
+        for col in row:
+            colorvalue = col[index]
+            newrow.append([
+                np.uint8(colorvalue),
+                np.uint8(colorvalue),
+                np.uint8(colorvalue),
+                np.uint8(col[3])
+            ])
+        result.append(np.array(newrow))
     
-    return [approx], edges, hierarchy
-
-
+    return np.array(result)
