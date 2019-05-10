@@ -1,7 +1,9 @@
 import os
 import logging
+import uuid
 
 from firebase_admin import credentials, firestore, initialize_app
+from google.cloud.firestore import Client
 from ..models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema  # type: ignore # noqa
 
 from source.config import CONFIG
@@ -15,7 +17,7 @@ class FBManager:
         certificate = credentials.Certificate(
             os.path.join(os.getcwd(), CONFIG["CERT"])
         )
-        self.db = firestore.client(initialize_app(certificate))
+        self.db: Client = firestore.client(initialize_app(certificate, name=str(uuid.uuid4())))
 
     def get_specific_pill(self, document_id: str):
         print(self.db.collection("pills").document(document_id).get().to_dict())

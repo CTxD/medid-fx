@@ -1,5 +1,6 @@
-from .colorx import cx
+from .colorx import cx, colorsvm
 from .utils import encoding2img
+from ..repository import firestore
 
 
 def getmatches(imageencoding):
@@ -10,8 +11,8 @@ def m(imageencoding: str, imagedescription: str = ''):
     with encoding2img.Encoding2IMG(imageencoding) as imgpath:
         cxoptions = {
             'raw_colormap': True,
-            'xterm_colormap': True,
-            'histogram': True,
+            'xterm_colormap': False,
+            'histogram': False,
             'verbose_desc': True,
             'delta_e': 1976,
             'colorbit': 6,
@@ -20,3 +21,15 @@ def m(imageencoding: str, imagedescription: str = ''):
             'desc': imagedescription
         }
         cx.getcxmap(imgpath, **cxoptions)
+
+
+def train():
+    fbm = firestore.FBManager()
+
+    singlecolorpills = list(filter(
+        lambda x: len(x['color']) == 1,
+        fbm.get_all_pills_slim()
+    ))
+
+    colorsvm.train(singlecolorpills)
+    

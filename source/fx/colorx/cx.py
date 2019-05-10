@@ -1,22 +1,23 @@
 import os
-import collections
 import time
 import logging
+import json
+import colorsys
+from typing import List, Dict
 
-from typing import List
+import numpy as np
 
 from colormath.color_objects import sRGBColor
-from .pillcolorpixels import getcolorpixels
+from .pillcolorpixels import getcolorpixels, getpillimagearray, grayscalecolorchannel
 from .colormap import convert_pixel_colors_to_vector
-from ..utils import colorheatmap, histogram
+from ..utils import colorheatmap, histogram, showimg
 from ...config import CONFIG
 
 
 logger = logging.getLogger(__name__)
-# Train model, skal tage en encoding af et pro.medicin billede, åbne det, croppe det og gemme de to encodings separat
 
 
-def getcxmap(imagepath: str, **optionskwargs): # noqa
+def getcxmap(imagepath: str, **optionskwargs): 
     """
     Supported options:
         - raw_colormap: bool
@@ -40,9 +41,6 @@ def getcxmap(imagepath: str, **optionskwargs): # noqa
     If desc is provided, the desc will replace the <imagepath name>.
 
     Passed-through options:
-        - downscale: int >= 32 (getcolorpixels)
-            Determines size of the image when downscaling. Image will be downsized to a square of 
-            size <downscale>x<downscale>. 
         - colorbit: int [6|8] (colormap)
             Which color palette to use. Choose between 6 and 8 bit palettes.
         - delta_e: int [1976|1994|2000] (colormap)
@@ -50,49 +48,61 @@ def getcxmap(imagepath: str, **optionskwargs): # noqa
         - white_threshold: int
     """
     starttime = time.time()
-    options = extractparameters(**{**optionskwargs, 'imagepath': imagepath})
+    # options = extractparameters(**{**optionskwargs, 'imagepath': imagepath})
 
-    pixels = getcolorpixels(imagepath, options['downscale'])
+    svmvector = getsvmvector(imagepath)
 
-    # ### RED START
-    # red = grayscalecolorchannel(out, 0)
-    # red_erosion = cv.erode(red, kernel, iterations=2) 
-    # red_dilation = cv.dilate(red_erosion, kernel, iterations=2)
-    # scaled_red = cv.resize(red_dilation, (downscale, downscale), interpolation=cv.INTER_AREA)
-
-    # flatred = scaled_red.flatten().reshape((-1, 4))
-    # coloredred = flatred[flatred[:, 0] != 0]
-
-    # avgred = np.average(coloredred, axis=0)
-    # print(avgred)
-
-    # ### RED END
-    # res = np.average(coloredpixels, axis=0)
-    # print(res)
-
-    # print(np.std(coloredred))
-    # exit()
-    
-    hex_raw = [pixel.get_rgb_hex() for pixel in pixels]
-    hex_count = collections.Counter(hex_raw)
-    print(len(pixels), len(hex_count))
-    
-    xterm_raw = convert_pixel_colors_to_vector(
-        hex_count, 
-        options['colorbit'], 
-        options['delta_e'], 
-        options['white_threshold']
-    )
-
-    total = sum(xterm_raw.values())
-    xterm_weighted = {color: ((1/total)*count*100) for color, count in xterm_raw.items()}
+    print(json.dumps(svmvector, indent=4))
     endtime = time.time()
-    print('Delta time:', str(endtime - starttime), 'seconds')
+    
+    print('Delta time:', str(endtime-starttime), " seconds")
 
-    outputimages(**{**options, 'pixels': pixels, 'xterm_raw': xterm_raw, 'xterm_weighted': xterm_weighted}) # noqa
+    # outputimages(**{**options, 'pixels': pixels, 'xterm_raw': xterm_raw, 'xterm_weighted': xterm_weighted}) # noqa
 
 
-def outputimages(**kwargs):
+def getsvmvector(imagepath: str) -> Dict[str, float]:
+    svmvector: Dict[str, float] = {f'F{i}': 0.0 for i in range(1, 21)}
+
+    imgarray = getpillimagearray(imagepath)
+    imgpixels = getcolorpixels(imgarray)
+
+    rgbstddev = np.std(imgpixels, axis=0)
+    rgbavg = np.average(imgpixels, axis=0)
+    for index, avg in enumerate(rgbavg):
+        # Features 1-3; Red, Green, and Blue intensity
+        svmvector[f'F{index+1}'] = avg
+    
+        # Features 4-6; Std. Dev for Red, Green, and Blue intensity
+        svmvector[f'F{index+4}'] = rgbstddev[index]
+ 
+    hsvpixels = np.array([colorsys.rgb_to_hsv(pixel[0], pixel[1], pixel[2]) for pixel in imgpixels])
+    hsvstddev = np.std(hsvpixels, axis=0)
+    for index, avg in enumerate(np.average(hsvpixels, axis=0)):
+        # Features 7-9; Hue, Saturaion, Value mean  
+        svmvector[f'F{index+7}'] = avg
+
+        # Features 10-12; Std. Dev. for Hue, Saturation, and Value
+        svmvector[f'F{index+10}'] = hsvstddev[index]
+
+    # Features 13-16; Red, Green, Blue, and Yellow Chromaticity mean
+    rgbvalsum = sum(rgbavg)
+    svmvector['F13'] = rgbavg[0]/(rgbvalsum)
+    svmvector['F14'] = rgbavg[1]/(rgbvalsum)
+    svmvector['F15'] = rgbavg[2]/(rgbvalsum)
+    svmvector['F16'] = (rgbavg[0]+rgbavg[1])/(2*rgbvalsum)
+
+    # Features 17-18; RG, GB, BR averages
+    svmvector['F17'] = (rgbavg[0]+rgbavg[1])/2
+    svmvector['F18'] = (rgbavg[1]+rgbavg[2])/2
+    svmvector['F19'] = (rgbavg[2]+rgbavg[0])/2
+
+    # Feature 20; Brightness / mean intensity
+    svmvector['F20'] = rgbvalsum/3 
+
+    return svmvector
+
+
+def outputimages(**kwargs):    
     if kwargs['raw_colormap']:
         filepath = f'output/{kwargs["imgname"]}_raw_colormap.{kwargs["extension"]}'
         logger.debug(f'Saving raw colormap to: {filepath}')
@@ -134,10 +144,6 @@ def extractparameters(**options):
     if 'delta_e' in options and options['delta_e'] in (1976, 1994, 2000):
         delta_e = options['delta_e']
 
-    downscale = 36
-    if 'downscale' in options and isinstance(options['downscale'], int) and options['downscale'] >= 32: # noqa
-        downscale = options['downscale']  
-
     white_threshold = 0
     if 'white_threshold' in options and isinstance(options['white_threshold'], int):
         white_threshold = options['white_threshold']  
@@ -147,7 +153,7 @@ def extractparameters(**options):
         imgname = options['desc']
     
     if 'verbose_desc' in options and isinstance(options['verbose_desc'], bool) and options['verbose_desc']: # noqa
-        imgname = f'{imgname}_bit{colorbit}_deltae{delta_e}_dscale{downscale}'
+        imgname = f'{imgname}_bit{colorbit}_deltae{delta_e}'
 
     raw_colormap = 'raw_colormap' in options and options['raw_colormap'] and CONFIG['ENVIRONMENT'] == 'DEV' # noqa
 
@@ -158,7 +164,6 @@ def extractparameters(**options):
     return {
         'colorbit': colorbit,
         'delta_e': delta_e,
-        'downscale': downscale,
         'white_threshold': white_threshold,
         'imgname': imgname,
         'extension': extension,

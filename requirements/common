@@ -4,3 +4,4 @@ gunicorn
 firebase-admin
 opencv-python
 colormath
+sklearn

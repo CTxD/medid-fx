@@ -59,34 +59,40 @@ def development():
 
     # ## DEVELOPMENT CODE GOES HERE ## #
     # Example:
+    
+    # TRAINING
+    fx.train()
 
-    pillname = 'fexo.jpg'
-
-    with open(f'resources/{pillname}', mode='rb') as f:
-        fx.m(base64.b64encode(f.read()), pillname.split('.')[0])
     return
+    
+    # CLASSIFYING
+    # pillname = 'fexo.jpg'
 
-    def splitproimg(imgpath):
-        with open(imgpath, mode='rb') as f:
-            with encoding2img.Encoding2IMG(base64.b64encode(f.read())) as tmpimgpath:
-                left, right = ShapePreprocessor().crop_image(tmpimgpath, grayscale=False)
-                tmpimgname, tmpimgext = os.path.basename(tmpimgpath).split('.')
-                tmpimgpath = os.path.dirname(tmpimgpath)
-                leftimgpath = os.path.join(tmpimgpath, f'{tmpimgname}_left.{tmpimgext}')
-                rightimgpath = os.path.join(tmpimgpath, f'{tmpimgname}_right.{tmpimgext}')
-                cv.imwrite(leftimgpath, cv.cvtColor(left, cv.COLOR_RGB2BGRA))
-                cv.imwrite(rightimgpath, cv.cvtColor(right, cv.COLOR_RGB2BGRA))
-                yield leftimgpath
-                yield rightimgpath
+    # with open(f'resources/{pillname}', mode='rb') as f:
+    #     fx.m(base64.b64encode(f.read()), pillname.split('.')[0])
+    # return
 
-    sp = ShapePreprocessor()
+    # def splitproimg(imgpath):
+    #     with open(imgpath, mode='rb') as f:
+    #         with encoding2img.Encoding2IMG(base64.b64encode(f.read())) as tmpimgpath:
+    #             left, right = ShapePreprocessor().crop_image(tmpimgpath, grayscale=False)
+    #             tmpimgname, tmpimgext = os.path.basename(tmpimgpath).split('.')
+    #             tmpimgpath = os.path.dirname(tmpimgpath)
+    #             leftimgpath = os.path.join(tmpimgpath, f'{tmpimgname}_left.{tmpimgext}')
+    #             rightimgpath = os.path.join(tmpimgpath, f'{tmpimgname}_right.{tmpimgext}')
+    #             cv.imwrite(leftimgpath, cv.cvtColor(left, cv.COLOR_RGB2BGRA))
+    #             cv.imwrite(rightimgpath, cv.cvtColor(right, cv.COLOR_RGB2BGRA))
+    #             yield leftimgpath
+    #             yield rightimgpath
 
-    for tmpimgpath in splitproimg(f'resources/{pillname}'):
-        img = cv.cvtColor(cv.imread(tmpimgpath, 0), cv.COLOR_RGB2BGR)
-        showimg.showimgs(['split', 'contours'], [img, showimg.get_contour_drawing(*sp.get_contours(img))])
-        with open(tmpimgpath, mode='rb') as f:
-            enc = base64.b64encode(f.read())
-            fx.m(enc, f'{pillname.split(".")[0]}_{tmpimgpath.split("_")[1].split(".")[0]}')
+    # sp = ShapePreprocessor()
+
+    # for tmpimgpath in splitproimg(f'resources/{pillname}'):
+    #     img = cv.cvtColor(cv.imread(tmpimgpath, 0), cv.COLOR_RGB2BGR)
+    #     showimg.showimgs(['split', 'contours'], [img, showimg.get_contour_drawing(*sp.get_contours(img))])
+    #     with open(tmpimgpath, mode='rb') as f:
+    #         enc = base64.b64encode(f.read())
+    #         fx.m(enc, f'{pillname.split(".")[0]}_{tmpimgpath.split("_")[1].split(".")[0]}')
     # # ## END OF DEVELOPMENT CODE ## #
 
 
