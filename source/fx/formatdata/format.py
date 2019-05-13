@@ -2,6 +2,7 @@ from source.repository.firestore import FBManager
 from source.fx import shapex
 
 
+
 def hasimage(pill):
     return pill["image"] is not None and pill["image"] and not isinstance(pill['image'][0], dict)  
 
@@ -20,3 +21,4 @@ def buildmodel():
     for pill in pills:
         img = s.load_image_from_bytestring(pill["image"][0].decode("utf-8"))
         hm1, hm2 = sd.calc_hu_moments_from_img(img)
+        

@@ -3,6 +3,9 @@ import logging
 # from source.models.v1 import FeatureVectorSchema
 from firebase_admin import credentials, firestore, initialize_app
 from source.models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema  # type: ignore # noqa
+import uuid
+from google.cloud.firestore import Client
+
 
 from source.config import CONFIG
 
@@ -15,7 +18,7 @@ class FBManager:
         certificate = credentials.Certificate(
             os.path.join(os.getcwd(), CONFIG["CERT"])
         )
-        self.db = firestore.client(initialize_app(certificate))
+        self.db: Client = firestore.client(initialize_app(certificate, name=str(uuid.uuid4())))
 
     def _convert_obj_to_dict(self, obj):
         class_dict = {}
