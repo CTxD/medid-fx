@@ -53,9 +53,9 @@ def development():
 
     Allows normal execution of functions WITHOUT STARTING THE SERVER!
     """
-    if not CONFIG['ENVIRONMENT'] == 'DEV':
-        logger.warning('Cannot invoke development function in a non-development environment!')
-        return
+    #if not CONFIG['ENVIRONMENT'] == 'DEV':
+        # logger.warning('Cannot invoke development function in a non-development environment!')
+        # return
 
     # ## DEVELOPMENT CODE GOES HERE ## #
     # Example:

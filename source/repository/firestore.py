@@ -24,12 +24,17 @@ class FBManager:
         return self.db.collection("pills").document(document_id).get().to_dict()
 
     def get_all_pills_slim(self):
+        # RETURN ALL PILLS FROM FILE
+        import json
+        return json.load(open('resources/allpillsslim.json'))
+        # STOP
+
         pills = []
         unpacked_pills = self.get_all_extended_pills()
 
         for item in unpacked_pills:
-            slim_pill_schema = SlimSchema()
             for photo in item["photofeatures"]:
+                slim_pill_schema = SlimSchema()
                 slim_pill_schema.name = item["pillname"]
                 slim_pill_schema.substance = item["substance"]
                 slim_pill_schema.kind = photo["kind"]
