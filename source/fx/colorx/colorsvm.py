@@ -5,6 +5,7 @@ import csv
 import pandas as pd
 from sklearn import svm, metrics
 from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.externals import joblib
 
 from ..utils import encoding2img
 from .cx import getsvmvector
@@ -36,9 +37,9 @@ def train(pills):
     y = svmvectorsdf['Label']
 
     colorsvm = svm.SVC(max_iter=5000, kernel='rbf', C=900, gamma='scale')
-    colorsvm.fit(x)
+    colorsvm.fit(x, y)
 
-    return colorsvm
+    joblib.dump(colorsvm, 'color_svm_model.pkl')
 
 
 def getsvmvectors(pills):
@@ -69,8 +70,7 @@ def getsvmvectors(pills):
 
 
 def predict(svmvector, pills):
-    svmodel = train(pills)
-
+    svmodel = joblib.load('color_svm_model.pkl')
     return svmodel.predict(svmvector)
 
 

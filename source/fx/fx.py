@@ -43,16 +43,24 @@ def train():
 
     # Get list of all pills, convert the image encoding to an image, then crop image, save each 
     # sides encoding and make a copy of the pillobj with each image encoding
-    allpills = []
-    for pillobj in fbm.get_all_pills_slim():
-        if not pillobj['image'] or isinstance(pillobj['image'][0], dict):
-            continue
+    # allpills = []
+    # for pillobj in fbm.get_all_pills_slim():
+    #     if not pillobj['image'] or isinstance(pillobj['image'][0], dict):
+    #         continue
         
-        pillobj['image'][0] = bytes(pillobj['image'][0], encoding='utf-8')
-        allpills.extend(promedimgsplit.promedimgsplit(pillobj))
+    #     pillobj['image'][0] = bytes(pillobj['image'][0], encoding='utf-8')
+    #     allpills.extend(promedimgsplit.promedimgsplit(pillobj))
 
     # Train SVM
-    res = colorsvm.predict(['WhateverName',170.7451684152402,196.6902263942573,210.11830480397572,4.877595882428889,3.1138188824459823,3.3679559245548476,0.5569988081056207,0.18753089499055584,210.11830480397572,0.004698496351695571,0.011381744333048994,3.3679559245548476,0.2956351392597971,0.3405574694195395,0.36380739132066336,0.3180963043396683,183.71769740474875,203.4042655991165,190.43173660960795,192.51789987115774], allpills)
+    pills_to_predict = [
+        [170.7451684152402,196.6902263942573,210.11830480397572,4.877595882428889,
+         3.1138188824459823,3.3679559245548476,0.5569988081056207,0.18753089499055584,
+         210.11830480397572,0.004698496351695571,0.011381744333048994,3.3679559245548476,
+         0.2956351392597971,0.3405574694195395,0.36380739132066336,0.3180963043396683,
+         183.71769740474875,203.4042655991165,190.43173660960795,192.51789987115774]
+    ]
+
+    res = colorsvm.predict(pills_to_predict, allpills)
     print(res)
     
     # svmmodel = colorsvm.train(allpills)
