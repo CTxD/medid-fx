@@ -24,8 +24,8 @@ def get_fsm():
 
 
 # Delegate for /api/v1/fx
-def fx_matches(imageencoding) -> Union[ErrorSchema, MatchSchema]: # pragma: no cover
-    return fx.getmatches(imageencoding)
+def getmatches(pillrep) -> Union[ErrorSchema, MatchSchema]: # pragma: no cover
+    return fx.getmatches(pillrep)
 
 
 # Delegate for /api/v1/medinfo/extended/{name}

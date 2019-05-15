@@ -8,21 +8,19 @@ servers:
   - url: /api/v1
 
 paths:
-  /fx/{imageencoding}:
-    get:
-      operationId: "source.api.v1.endpoints.fx_matches"
+  /fx/getmatches:
+    put:
+      operationId: "source.api.v1.endpoints.getmatches"
       tags:
         - "Public endpoints"
       summary: Find best matches of a given pill/tablet
       description: Given an encoding of an image of a pill/tablet get a list of the best matches.
-      parameters:
-        - in: path
-          name: imageencoding
-          schema:
-            type: string
-            format: byte
-          required: true
-          description: Encoding of image to extract features from
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-body-name: pillrep
+              $ref: '#/components/schemas/PillRepresentation'
       responses:
         '200':
            $ref: '#/components/responses/MatchResponse'
@@ -107,7 +105,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/MetaSchema'
-
+    
     MatchResponse:
       description: Ok
       content: 
@@ -143,6 +141,16 @@ components:
         message:
           type: string
           description: Error message
+
+    PillRepresentation:
+      type: object
+      properties: 
+        imprintid:
+          type: string
+          description: id of imprint
+        imgstring:
+          type: string
+          description: string of image as a binary string
 
     DrugSchema:
       type: object
@@ -186,6 +194,7 @@ components:
               type: string
               description: Active substance of the pill
       
+    
     MatchSchema:
       type: array
       items: 

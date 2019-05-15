@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import random as rng
 import math
+import base64
 
 
 from .utils import encoding2img
@@ -10,6 +11,11 @@ from .utils import encoding2img
 class ShapePreprocessor:
     def __init__(self):
         rng.seed(12345)
+
+    def convert_img_to_bytestring(self, img):
+        retval, buffer = cv.imencode('.jpg', img)
+        jpg_as_text = base64.b64encode(buffer)
+        return jpg_as_text
 
     def load_image_from_file(self, filePath):
         try:
@@ -29,6 +35,7 @@ class ShapePreprocessor:
 
         return img
     def crop_image(self, img):
+        
         clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         img = clahe.apply(img)
 
@@ -59,6 +66,16 @@ class ShapeDescriptor:
     def __init__(self):
         self.preprocessor = ShapePreprocessor()
 
+    def calc_hu_moments_from_single_img(self, img):
+
+        c1, edges, _ = self.preprocessor.get_contours(img)
+
+        hu = []
+        if len(c1) > 0:
+            hu = self.calc_hu_moments(edges)
+
+        return hu 
+        
     def calc_hu_moments_from_img(self, img):
         img, snd_img = self.preprocessor.crop_image(img)
 
