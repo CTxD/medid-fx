@@ -30,6 +30,7 @@ class Server(BaseApplication):
         for key, value in gunicornconfig.items():
             self.cfg.set(key.lower(), value)
 
+
     def load(self):
         return self.application # pragma: no cover
 

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from .colorx import cx
 from .utils import encoding2img, promedimgsplit
 from ..repository import firestore
@@ -77,3 +78,15 @@ def train():
 
 #         json.dump(allpillslist, f, indent=4, ensure_ascii=False)
 #         json.dump(allpills, f, indent=4)
+=======
+from source.repository.firestore import FBManager
+from source.fx import shapex
+from source.models.v1.PillFeatureSchema import PillFeature
+
+def getmatches(pillrepresentation):
+    fb = FBManager()
+    s = shapex.ShapePreprocessor()
+    sd = shapex.ShapeDescriptor()
+    img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
+    hu = sd.ShapeDescriptor(img)
+>>>>>>> feature_generate_model

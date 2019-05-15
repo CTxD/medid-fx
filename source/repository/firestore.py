@@ -5,7 +5,7 @@ import time
 
 from firebase_admin import credentials, firestore, initialize_app
 from google.cloud.firestore import Client
-from ..models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema  # type: ignore # noqa
+from ..models.v1 import MatchSchema, ExtendedSchema, SlimSchema, MetaSchema, ErrorSchema, PillFeatureSchema  # type: ignore # noqa
 
 from source.config import CONFIG
 
@@ -20,9 +20,37 @@ class FBManager:
         )
         self.db: Client = firestore.client(initialize_app(certificate, name=str(uuid.uuid4())))
 
+    def _convert_obj_to_dict(self, obj):
+        class_dict = {}
+
+        def parsekeyvalue(key, value):
+            if key.startswith('__'):
+                return None
+            if callable(value):
+                return None
+            if isinstance(value, list):
+                newattrvalue = []
+                for oldvalue in value:
+                    if isinstance(oldvalue, (str, int, float, bool, bytes)):
+                        newattrvalue.append(oldvalue)
+                    else:
+                        newattrvalue.append(self._convert_obj_to_dict(oldvalue))
+                value = newattrvalue
+            return value
+        
+        for attr in dir(obj):
+            value = parsekeyvalue(attr, getattr(obj, attr))
+            if value is None:
+                continue
+            class_dict[attr] = value
+        return class_dict
+
+
+
     def get_specific_pill(self, document_id: str):
         print(self.db.collection("pills").document(document_id).get().to_dict())
         return self.db.collection("pills").document(document_id).get().to_dict()
+
 
     def get_all_pills_slim(self):
         # RETURN ALL PILLS FROM FILE
@@ -65,3 +93,7 @@ class FBManager:
 
     # def add_model(self, model):
     #     self.db.collection("models").document(f'{int(time.time())}').set(model)
+    
+    def add_pill_feature(self, collection_id: str, pill_feature: PillFeatureSchema): 
+        temp = self._convert_obj_to_dict(pill_feature)
+        self.db.collection(collection_id).document(pill_feature.pillname).set(temp) 

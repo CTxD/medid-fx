@@ -1,5 +1,10 @@
 import random as rng
 import math
+import base64
+
+
+from .utils import encoding2img
+
 
 import numpy as np
 import cv2 as cv
@@ -9,14 +14,32 @@ class ShapePreprocessor:
     def __init__(self):
         rng.seed(12345)
 
+    def convert_img_to_bytestring(self, img):
+        retval, buffer = cv.imencode('.jpg', img)
+        jpg_as_text = base64.b64encode(buffer)
+        return jpg_as_text
+
     def load_image_from_file(self, filePath):
         try:
             img = cv.samples.findFile(filePath)
-        except Exception:
+            img = cv.imread(img, 0)
+        except:
             raise Exception("Image could not be loaded from file")
         
         return img
 
+    def load_image_from_bytestring(self, imgstring):
+        try:
+            with encoding2img.Encoding2IMG(imgstring) as tmpimg:
+                img = cv.imread(tmpimg, 0)
+        except:
+            raise Exception("Image could not be decoded from bytestring")
+
+        return img
+    def crop_image(self, img):
+        
+        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        img = clahe.apply(img)
 
     def crop_image(self, imgpath, grayscale=True): # pragma: no cover # noqa
         """
@@ -60,25 +83,41 @@ class ShapePreprocessor:
 
         edges = cv.Canny(img, 100, 500)
         contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-        epsilon = 0.0001*cv.arcLength(contours[0], True)
-        approx = cv.approxPolyDP(contours[0], epsilon, True)
-        return [approx], edges, hierarchy
+        if len(contours) > 0:
+            epsilon = 0.001*cv.arcLength(contours[0], True)
+            approx = cv.approxPolyDP(contours[0], epsilon, True)
+            return [approx], edges, hierarchy
+        return contours, edges, hierarchy
 
-        
+
 class ShapeDescriptor:
     def __init__(self):
         self.preprocessor = ShapePreprocessor()
 
+    def calc_hu_moments_from_single_img(self, img):
+
+        c1, edges, _ = self.preprocessor.get_contours(img)
+
+        hu = []
+        if len(c1) > 0:
+            hu = self.calc_hu_moments(edges)
+
+        return hu 
+        
     def calc_hu_moments_from_img(self, img):
         img, snd_img = self.preprocessor.crop_image(img)
 
-        _, edges, _ = self.preprocessor.get_contours(img)
-        _, snd_edges, _ = self.preprocessor.get_contours(snd_img)
+        c1, edges, _ = self.preprocessor.get_contours(img)
+        c2, snd_edges, _ = self.preprocessor.get_contours(snd_img)
 
-        hu = self.calc_hu_moments(edges)
-        snd_hu = self.calc_hu_moments(snd_edges)
+        hu = []
+        snd_hu = []
+        if len(c1) > 0:
+            hu = self.calc_hu_moments(edges)
+        if len(c2) > 0:
+            snd_hu = self.calc_hu_moments(snd_edges)
 
-        return hu, snd_hu
+        return hu, snd_hu 
 
     def calc_hu_moments(self, edges):
         moments = cv.HuMoments(cv.moments(edges))

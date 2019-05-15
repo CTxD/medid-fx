@@ -1,6 +1,10 @@
 import logging
 import os
 import sys
+<<<<<<< HEAD
+=======
+from source.fx.formatdata.format import buildmodel
+>>>>>>> feature_generate_model
 from typing import Union
 
 from source import config, server
@@ -106,9 +110,11 @@ def printstatus(status: Union[str, bool]):
 if __name__ == '__main__':
     main()  
     logger.info('Starting application.')
-
+    buildmodel()
     if '--dev' in sys.argv:
         logger.info('Note: Using --dev flag will execute code in server.development, but will NOT start the server!') # noqa
         server.development()
     else:
         server.Server(server.createapp()).run()
+    
+    
