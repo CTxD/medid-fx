@@ -1,12 +1,16 @@
 import csv
+import pandas as pd
 
 from .colorx import cx, colorsvm
 from .utils import encoding2img, promedimgsplit
 from ..repository import firestore
 
+import base64
+import requests
+
 
 def getmatches(imageencoding):
-    return 'extract features for: ' + imageencoding 
+    return 'extract features for: ' + imageencoding
 
 
 def m(imageencoding: str, imagedescription: str = ''):
@@ -38,42 +42,77 @@ def train():
     #     'image': open('resources/furixretard_encoding', mode='rb').read()
     # }
 
-    # Make FBM instance 
+    # Make FBM instance
     fbm = firestore.FBManager()
 
-    # Get list of all pills, convert the image encoding to an image, then crop image, save each 
+    # Get list of all pills, convert the image encoding to an image, then crop image, save each
     # sides encoding and make a copy of the pillobj with each image encoding
     # allpills = []
     # for pillobj in fbm.get_all_pills_slim():
     #     if not pillobj['image'] or isinstance(pillobj['image'][0], dict):
     #         continue
-        
+
     #     pillobj['image'][0] = bytes(pillobj['image'][0], encoding='utf-8')
     #     allpills.extend(promedimgsplit.promedimgsplit(pillobj))
 
-    # Train SVM
-    pills_to_predict = [
-        [170.7451684152402,196.6902263942573,210.11830480397572,4.877595882428889,
-         3.1138188824459823,3.3679559245548476,0.5569988081056207,0.18753089499055584,
-         210.11830480397572,0.004698496351695571,0.011381744333048994,3.3679559245548476,
-         0.2956351392597971,0.3405574694195395,0.36380739132066336,0.3180963043396683,
-         183.71769740474875,203.4042655991165,190.43173660960795,192.51789987115774]
-    ]
+    # dicct = {
+    #     "F1": 100,
+    #     "F2": 20,
+    #     "F3": 3333,
+    #     "F4": 100,
+    #     "F5": 20,
+    #     "F6": 3333,
+    #     "F7": 100,
+    #     "F8": 20,
+    #     "F9": 3333,
+    #     "F10": 100,
+    #     "F11": 20,
+    #     "F12": 3333,
+    #     "F13": 100,
+    #     "F14": 20,
+    #     "F15": 3333,
+    #     "F16": 100,
+    #     "F17": 20,
+    #     "F18": 3333,
+    #     "F19": 33,
+    #     "F20": 22
+    # }
 
-    res = colorsvm.predict(pills_to_predict, allpills)
-    print(res)
-    
-    # svmmodel = colorsvm.train(allpills)
-    exit()
+    def get_as_base64(url):
+        return str(base64.b64encode(requests.get(url).content))
+
+    allpills = fbm.get_all_pills_slim()
+
+    pill_map_dict = {}
+
+    for pill in allpills:
+        print(pill['name'])
+        if len(pill['imprint']) == 0:
+            continue
+        if pill['imprint'] == "":
+            continue
+        if pill['imprint'][0].startswith("/res"):
+            if pill['imprint'][0] in pill_map_dict.keys():
+                continue
+            else:
+                pill_map_dict[pill['imprint'][0]] = get_as_base64(
+                    "http://pro.medicin.dk" + pill['imprint'][0])
+
+    print(pill_map_dict)
+    import json
+    with open('peterpikhaar.txt', 'w') as file:
+        file.write(json.dumps(pill_map_dict, indent=4))
+
     # Train model
-    #for pillobj in allpills:
-        # Get shape vector
-        # Get color vector
-        # combine
+    # for pillobj in allpills:
+    # Get shape vector
+    # Get color vector
+    # combine0
 
-        # Add to matrix
+    # Add to matrix
 
     # Upload model + SVM model
+
 
 def parse(obj):
     if isinstance(obj, dict):
@@ -81,7 +120,7 @@ def parse(obj):
     elif isinstance(obj, list):
         return listtype(obj)
     elif isinstance(obj, str):
-        return obj 
+        return obj
     elif isinstance(obj, bytes):
         return obj.decode('utf-8')
     else:
@@ -97,7 +136,7 @@ def dicttype(value):
     return result
 
 
-def listtype(value): 
+def listtype(value):
     result = []
     for elem in value:
         result.append(parse(elem))
@@ -114,7 +153,7 @@ def savetofile():
             pill = {}
             for k, v in pillobj.items():
                 pill[k] = parse(v)
-            
+
             allpillslist.append(pill)
 
         json.dump(allpillslist, f, indent=4, ensure_ascii=False)

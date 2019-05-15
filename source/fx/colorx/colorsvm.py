@@ -1,6 +1,6 @@
 import json
 import itertools as it
-import csv 
+import csv
 
 import pandas as pd
 from sklearn import svm, metrics
@@ -15,7 +15,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-
 def getfilteredpills(pills):
     ignorecolors = ['Spættet', 'Transparent']
     return list(filter(
@@ -24,7 +23,7 @@ def getfilteredpills(pills):
     ))
 
 
-def train(pills): 
+def train(pills):
     svmvectorsdf = pd.DataFrame(getsvmvectors(pills))
 
     x = svmvectorsdf[
@@ -55,23 +54,25 @@ def getsvmvectors(pills):
 
         if not pill['image'] or not pill['image'][0] or isinstance(pill['image'][0], dict):
             continue
-      
+
         with encoding2img.Encoding2IMG(pill['image'][0]) as imagepath:
             try:
                 pillsvmvector = getsvmvector(imagepath)
             except Exception:
                 pass
             else:
-                label = pill['color'][0] # For now we only handle single-color pills
+                # For now we only handle single-color pills
+                label = pill['color'][0]
 
-                svmvectors.append({**pillsvmvector, 'Name': pill['name'], 'Label': label})
-    
+                svmvectors.append(
+                    {**pillsvmvector, 'Name': pill['name'], 'Label': label})
+
     return svmvectors
 
 
-def predict(svmvector, pills):
+def predict(svmvector):
     svmodel = joblib.load('color_svm_model.pkl')
-    return svmodel.predict(svmvector)
+    return svmodel.predict(vector)
 
 
 def writecsvfile(svmvectors):
@@ -129,29 +130,29 @@ def test_best_accuracy_configuration_and_report():
     #         higestaccuracy = accuracy
     #         bestconfig = comb
     #     print("Configuration: " + str(comb) + " || Accuracy: " + str(accuracy))
-    
 
     man = svm.SVC(max_iter=5000, kernel='rbf', C=900, gamma='scale')
-    
+
     scores = cross_val_score(man, x, y, cv=10)
-    #print(scores)
+    # print(scores)
     #print(bestconfig, higestaccuracy)
 
-    print_accuracy_report(man, x,y, 10)
+    print_accuracy_report(man, x, y, 10)
+
 
 def print_accuracy_report(classifier, X, y, num_validations=5):
-    accuracy = cross_val_score(classifier, 
-            X, y, scoring='accuracy', cv=num_validations)
+    accuracy = cross_val_score(classifier,
+                               X, y, scoring='accuracy', cv=num_validations)
     print("Accuracy: " + str(round(100*accuracy.mean(), 2)) + "%")
 
-    f1 = cross_val_score(classifier, 
-            X, y, scoring='f1_weighted', cv=num_validations)
-    print ("F1: " + str(round(100*f1.mean(), 2)) + "%")
+    f1 = cross_val_score(classifier,
+                         X, y, scoring='f1_weighted', cv=num_validations)
+    print("F1: " + str(round(100*f1.mean(), 2)) + "%")
 
-    precision = cross_val_score(classifier, 
-            X, y, scoring='precision_weighted', cv=num_validations)
-    print ("Precision: " + str(round(100*precision.mean(), 2)) + "%")
+    precision = cross_val_score(classifier,
+                                X, y, scoring='precision_weighted', cv=num_validations)
+    print("Precision: " + str(round(100*precision.mean(), 2)) + "%")
 
-    recall = cross_val_score(classifier, 
-            X, y, scoring='recall_weighted', cv=num_validations)
-    print ("Recall: " + str(round(100*recall.mean(), 2)) + "%")  
+    recall = cross_val_score(classifier,
+                             X, y, scoring='recall_weighted', cv=num_validations)
+    print("Recall: " + str(round(100*recall.mean(), 2)) + "%")
