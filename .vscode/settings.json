@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "/Users/christianlarsen/.virtualenvs/medid-fx/bin/python",
+    "python.pythonPath": "/home/dennis/.virtualenvs/medid-fx/bin/python",
     "python.linting.prospectorEnabled": true
 }

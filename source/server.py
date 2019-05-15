@@ -61,16 +61,16 @@ def development():
     # Example:
     
     # TRAINING
-    fx.train()
+    # fx.train()
 
-    return
+    # return
     
     # CLASSIFYING
-    # pillname = 'fexo.jpg'
+    pillname = 'centyl_manual.jpg'
 
-    # with open(f'resources/{pillname}', mode='rb') as f:
-    #     fx.m(base64.b64encode(f.read()), pillname.split('.')[0])
-    # return
+    with open(f'resources/{pillname}', mode='rb') as f:
+        fx.getmatches(base64.b64encode(f.read()))
+    return
 
     # def splitproimg(imgpath):
     #     with open(imgpath, mode='rb') as f:

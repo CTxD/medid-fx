@@ -1,6 +1,7 @@
 import os
 import logging
 import uuid
+import time
 
 from firebase_admin import credentials, firestore, initialize_app
 from google.cloud.firestore import Client
@@ -55,3 +56,12 @@ class FBManager:
             pills.append(pill.to_dict())
 
         return pills
+
+    # def get_latest_model(self):
+    #     allmodels = self.db.collection("models").get()
+
+
+    #     # Find model med seneste timestamp og returner
+
+    # def add_model(self, model):
+    #     self.db.collection("models").document(f'{int(time.time())}').set(model)

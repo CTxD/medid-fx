@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from ..colorx import colormap
 
 
-def createhistogram(colorcount: Dict[str, int], imagepath: str, bitcolor: int):
+def createhistogram(colorcount: Dict[str, int], imagepath: str, bitcolor: int): # pragma: no cover
     colorbins = colormap.hex_values[bitcolor]
 
     values: List[float] = [

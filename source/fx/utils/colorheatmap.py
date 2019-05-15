@@ -21,11 +21,11 @@ sortingalgs = {
 }
 
 
-def main():
+def main(): # pragma: no cover
     img_creater(test, 'RGB', 50, "test.jpg")
 
 
-def img_creater(array_of_colors, mode: str, size: int, filename: str):
+def img_creater(array_of_colors, mode: str, size: int, filename: str): # pragma: no cover
     i = math.ceil(math.sqrt(len(array_of_colors)))
     
     img = Image.new(mode, (i*size, i*size), color='black')

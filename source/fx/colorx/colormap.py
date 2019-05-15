@@ -46,8 +46,8 @@ delta_algorithms = {
 #     exit()
 
 
-def _map_rgb_color_to_xterm_color(srgb: sRGBColor, bit: int, delta_e: int, white_threshold: int = 0):
-    # Convert sRGBColor to L.a.b color object
+def _map_rgb_color_to_xterm_color(srgb: sRGBColor, bit: int, delta_e: int, white_threshold: int = 0): # pragma: no cover
+    # Convert sRGBColor to L.a.b color object 
     labcolor = convert_color(srgb, LabColor)
 
     # Find the color from lab_object that is most similar to labcolor
@@ -72,7 +72,7 @@ def _map_rgb_color_to_xterm_color(srgb: sRGBColor, bit: int, delta_e: int, white
     return lowest_d_val, position_d_val
  
 
-def convert_pixel_colors_to_vector(hexcount: Dict[str, int], bit: int, delta_e: int, white_threshold: int = 0):
+def convert_pixel_colors_to_vector(hexcount: Dict[str, int], bit: int, delta_e: int, white_threshold: int = 0): # pragma: no cover
     """Expects a dictionary of hex values and corresponding count as input. """
     # instantiating an array of langth 256, to hold every color
     color_vector = [0 for x in range(len(hex_values[bit]))]

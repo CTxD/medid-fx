@@ -24,7 +24,7 @@ def showimgs(titles, images): # pragma: no cover
     plt.show()
 
 
-def get_contour_drawing(contours, edges, hierarchy):
+def get_contour_drawing(contours, edges, hierarchy): # pragma: no cover
     drawing = np.zeros((edges.shape[0], edges.shape[1], 3), dtype=np.uint8)
     for i in range(len(contours)): # noqa
         epsilon = 0.01*cv.arcLength(contours[i], True)
