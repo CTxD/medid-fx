@@ -44,7 +44,7 @@ def medinfo_slim() -> Union[ErrorSchema, List[SlimSchema]]:
 
 # Delegate for /api/v1/generate/{authtoken}
 def generate_model(authtoken): # pragma: no cover
-    return authtoken, 403
+    fx.train()
 
 
 # Delegate for /api/v1/meta

@@ -3,7 +3,7 @@ import base64
 import uuid
 
 
-class Encoding2IMG():
+class Encoding2TmpFile():
     def __init__(self, encoding: str):
         self.encoding = encoding
         self.tempdir = os.path.join(os.getcwd(), str(uuid.uuid4()))
@@ -26,5 +26,3 @@ class Encoding2IMG():
         
         # Remove the (now empty) tempdir
         os.rmdir(self.tempdir)
-
-        

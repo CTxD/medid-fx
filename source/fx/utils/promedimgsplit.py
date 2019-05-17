@@ -5,11 +5,11 @@ import copy
 import cv2 as cv
 
 from ..shapex import ShapePreprocessor
-from .encoding2img import Encoding2IMG
+from .encoding2tmpfile import Encoding2TmpFile
 
 
 def promedimgsplit(pillobj):
-    with Encoding2IMG(pillobj['image'][0]) as promedimgpath:
+    with Encoding2TmpFile(pillobj['image'][0]) as promedimgpath:
         objs = {}
         objs['left_img'], objs['right_img'] = ShapePreprocessor().crop_image(
             promedimgpath, 

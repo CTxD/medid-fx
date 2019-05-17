@@ -1,14 +1,15 @@
 import colorsys
 import warnings
+import pickle
 from typing import List, Dict
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn import svm
 
 from .pillcolorpixels import getcolorpixels, getpillimagearray
-from ..utils import encoding2img
+from ..utils import encoding2tmpfile
+from ...repository import firestore
 
 
 warnings.filterwarnings("ignore")
@@ -17,37 +18,32 @@ warnings.filterwarnings("ignore")
 def getcx(imagepath: str) -> List[str]: 
     svmvector = getsvmvector(imagepath)
     
-    svmodel = joblib.load('color_svm_model.pkl')
+    # Fetch latest svmmodel from db and convert it to an SVC object
+    svmmodel: svm.SVC = pickle.loads(firestore.FBManager().get_latest_model()['svmmodel']) 
     
-    return svmodel.predict([[v for _, v in svmvector.items()]])
+    return svmmodel.predict([[v for _, v in svmvector.items()]]) 
 
 
 def getsvmvectors(pills: List[Dict]) -> List[Dict[str, float]]:
-    ignorecolors = ['Spættet', 'Transparent']
-    filteredpills = list(filter(
-        lambda x: len(x['color']) == 1 and x['color'][0] not in ignorecolors,
-        pills
-    ))
-
     svmvectors = []
 
     count = -1
-    for pill in filteredpills:
+    for pill in pills:
         count += 1
         if count and count % 100 == 0:
-            print(count / len(filteredpills) * 100, '%')
+            print(count / len(pills) * 100, '%')
 
         if not pill['image'] or not pill['image'][0] or isinstance(pill['image'][0], dict):
             continue
 
-        with encoding2img.Encoding2IMG(pill['image'][0]) as imagepath:
+        with encoding2tmpfile.Encoding2TmpFile(pill['image'][0]) as imagepath:
             try:
                 pillsvmvector = getsvmvector(imagepath)
             except Exception:
                 pass
             else:
                 # For now we only handle single-color pills
-                label = pill['color'][0]
+                label = compreslabels(pill['color'])[0]
 
                 svmvectors.append(
                     {**pillsvmvector, 'Name': pill['name'], 'Label': label})
@@ -97,7 +93,7 @@ def getsvmvector(imagepath: str) -> Dict[str, float]:
     return svmvector
 
 
-def train(pills: List[Dict]) -> None:
+def train(pills: List[Dict]) -> svm.SVC:
     svmvectorsdf = pd.DataFrame(getsvmvectors(pills))
 
     x = svmvectorsdf[
@@ -112,76 +108,55 @@ def train(pills: List[Dict]) -> None:
     colorsvm = svm.SVC(max_iter=5000, kernel='rbf', C=900, gamma='scale')
     colorsvm.fit(x, y)
 
-    joblib.dump(colorsvm, 'color_svm_model.pkl')
+    return colorsvm
 
 
-# def outputimages(**kwargs):    
-#     if kwargs['raw_colormap']:
-#         filepath = f'output/{kwargs["imgname"]}_raw_colormap.{kwargs["extension"]}'
-#         logger.debug(f'Saving raw colormap to: {filepath}')
-#         colorheatmap.img_creater(kwargs['pixels'], 'RGB', 20, filepath)
-
-#     if kwargs['xterm_colormap']:
-#         filepath = f'output/{kwargs["imgname"]}_xterm_colormap.{kwargs["extension"]}'
-#         logger.debug(f'Saving xterm colormap to: {filepath}')
-#         xtermrgb: List[sRGBColor] = []
-#         for color, count in kwargs['xterm_raw'].items():
-#             xtermrgb.extend(
-#                 list(
-#                     map(
-#                         lambda x: sRGBColor.new_from_rgb_hex(x), 
-#                         [color]*count
-#                     )
-#                 )
-#             )
-#         # for index in range(0, len(xterm)): # noqa
-#         #     if xterm[index] == 0:
-#         #         continue
-
-#         #     for _ in range(0, xterm[index]):
-#         #         xtermrgb.append(sRGBColor.new_from_rgb_hex(hex_values[index]))
-#         colorheatmap.img_creater(xtermrgb, 'RGB', 20, filepath)
-
-#     if kwargs['histogram']:
-#         filepath = f'output/{kwargs["imgname"]}_histogram.{kwargs["extension"]}'
-#         logger.debug(f'Saving histogram to: {filepath}')
-#         histogram.createhistogram(kwargs['xterm_weighted'], filepath, kwargs['colorbit'])
-
-
-# def extractparameters(**options):
-#     colorbit = 6
-#     if 'colorbit' in options and options['colorbit'] in (3, 6, 8):
-#         colorbit = options['colorbit']
-
-#     delta_e = 1976
-#     if 'delta_e' in options and options['delta_e'] in (1976, 1994, 2000):
-#         delta_e = options['delta_e']
-
-#     white_threshold = 0getsvmvectors
-#     if 'white_threshold' in options and isinstance(options['white_threshold'], int):
-#         white_threshold = options['white_threshold']  
-
-#     imgname, extension = os.path.basename(options['imagepath']).split('.')
-#     if 'desc' in options and options['desc'] and isinstance(options['desc'], str):
-#         imgname = options['desc']
+_labelmappings = {
+    'Gul': ['Lysegul', 'Gul', 'Mørkegul'],
+    'Rød': ['Lyserød', 'Rød', 'Mørkerød'],
+    'Brun': ['Lysebrun', 'Brun', 'Mørkebrun'],
+    'Grøn': ['Lysegrøn', 'Grøn', 'Mørkegrøn'],
+    'Blå': ['Lysbelå', 'Blå', 'Mørkeblå'],
     
-#     if 'verbose_desc' in options and isinstance(options['verbose_desc'], bool) and options['verbose_desc']: # noqa
-#         imgname = f'{imgname}_bit{colorbit}_deltae{delta_e}'
-getsvmvectors
-#     raw_colormap = 'raw_colormap' in options and options['raw_colormap'] and CONFIG['ENVIRONMENT'] == 'DEV' # noqa
+    'Grå': ['Grå', 'Lysegrå'],
+    'Orange': ['Orange', 'Lys orange'],
+    'Fersken': ['Fersken', 'Lys fersken'],
+    'Lilla': ['Lilla', 'Lys lilla'],
 
-#     xterm_colormap = 'xterm_colormap' in options and options['xterm_colormap'] and CONFIG['ENVIRONMENT'] == 'DEV' # noqa
+    'Rødbrun': ['Rødbrun'],
+    'Hvid': ['Hvid'],
+    'Rosa': ['Rosa'],
+    'Beige': ['Beige'],
+    'Sort': ['Sort'],
+    'Grågrøn': ['Grågrøn'],
+    'Pink': ['Pink'],
+    'Turkis': ['Turkis'],
+    'Offwhite': ['Offwhite'],
+    'Gråbrun': ['Gråbrun'],
+    'Gråhvid': ['Gråhvid'],
 
-#     histogram = 'histogram' in options and options['histogram'] and CONFIG['ENVIRONMENT'] == 'DEV'
+    'Gennemsigtig': ['Gennemsigtig'],
+    'Transparent': ['Transparent'],
+    'Spættet': ['Spættet'],
+}
 
-#     return {
-#         'colorbit': colorbit,
-#         'delta_e': delta_e,
-#         'white_threshold': white_threshold,
-#         'imgname': imgname,
-#         'extension': extension,
-#         'raw_colormap': raw_colormap,
-#         'xterm_colormap': xterm_colormap,
-#         'histogram': histogram
-#     }
 
+def compreslabels(labels: List[str]) -> List[str]:
+    compmap = {label: comp for comp, labellist in _labelmappings.items() for label in labellist}
+    result: List[str] = []
+    for label in labels:
+        if label not in compmap:
+            continue
+        result.append(compmap[label])
+
+    return result
+
+
+def uncompreslabels(labels: List[str]) -> List[str]:
+    result: List[str] = []
+    for label in labels:
+        if label not in _labelmappings:
+            continue
+        result.extend(_labelmappings[label])
+
+    return result

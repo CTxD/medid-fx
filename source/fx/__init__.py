@@ -1,1 +1,1 @@
-from .utils.encoding2img import Encoding2IMG
+from .utils.encoding2tmpfile import Encoding2TmpFile

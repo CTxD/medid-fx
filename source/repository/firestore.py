@@ -1,7 +1,8 @@
-import os
 import logging
 import uuid
 import time
+from typing import Dict, List
+from string import ascii_lowercase
 
 from firebase_admin import credentials, firestore, initialize_app
 from google.cloud.firestore import Client
@@ -45,12 +46,9 @@ class FBManager:
             class_dict[attr] = value
         return class_dict
 
-
-
     def get_specific_pill(self, document_id: str):
         print(self.db.collection("pills").document(document_id).get().to_dict())
         return self.db.collection("pills").document(document_id).get().to_dict()
-
 
     def get_all_pills_slim(self):
         # RETURN ALL PILLS FROM FILE
@@ -85,15 +83,42 @@ class FBManager:
 
         return pills
 
-    # def get_latest_model(self):
-    #     allmodels = self.db.collection("models").get()
+    def get_latest_model(self):
+        svmmodelsnapshot = list(self.db.collection("svmmodel").get())[0]
+        timestamp = svmmodelsnapshot.id
+        
+        allpfssnapshot = list(self.db.collection('pillfeatures').get())
+        pfsbytimestamp = list(
+            map(
+                lambda x: x.to_dict(),
+                filter(
+                    lambda x: x.id.startswith(str(timestamp)),
+                    allpfssnapshot
+                )
+            )
+        )
 
+        return {
+            'pillfeatures': [pfs for pf in pfsbytimestamp for pfs in pf['pillfeatures']],
+            'svmmodel': svmmodelsnapshot.to_dict()['svmmodel']
+        }
 
-    #     # Find model med seneste timestamp og returner
+    def add_model(self, model: Dict):
+        timestamp = str(int(time.time()))
 
-    # def add_model(self, model):
-    #     self.db.collection("models").document(f'{int(time.time())}').set(model)
-    
-    def add_pill_feature(self, collection_id: str, pill_feature: PillFeatureSchema): 
-        temp = self._convert_obj_to_dict(pill_feature)
-        self.db.collection(collection_id).document(pill_feature.pillname).set(temp) 
+        pfsbyletter: Dict[str, List] = {}
+        for pf in model['pillfeatures']:
+            letter = pf['name'][0].lower()
+            if letter not in pfsbyletter:
+                pfsbyletter[letter] = []
+
+            pfsbyletter[letter].append(pf)
+        
+        for letter, pfs in pfsbyletter.items():
+            self.db.collection("pillfeatures").document(f'{timestamp}_{letter}').set(
+                {
+                    'pillfeatures': pfs
+                }
+            ) 
+
+        self.db.collection("svmmodel").document(timestamp).set({'svmmodel': model['svmmodel']})

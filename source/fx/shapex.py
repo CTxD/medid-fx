@@ -2,12 +2,10 @@ import random as rng
 import math
 import base64
 
-
-from .utils import encoding2img
-
-
 import numpy as np
 import cv2 as cv
+
+from .utils import encoding2tmpfile
 
 
 class ShapePreprocessor:
@@ -30,17 +28,13 @@ class ShapePreprocessor:
 
     def load_image_from_bytestring(self, imgstring):
         try:
-            with encoding2img.Encoding2IMG(imgstring) as tmpimg:
+            with encoding2tmpfile.Encoding2TmpFile(imgstring) as tmpimg:
                 img = cv.imread(tmpimg, 0)
         except:
             raise Exception("Image could not be decoded from bytestring")
 
         return img
-    def crop_image(self, img):
-        
-        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        img = clahe.apply(img)
-
+    
     def crop_image(self, imgpath, grayscale=True): # pragma: no cover # noqa
         """
         Takes as input the path to a pro.medicin.dk image and returns the two cropped images as numpy
@@ -95,7 +89,6 @@ class ShapeDescriptor:
         self.preprocessor = ShapePreprocessor()
 
     def calc_hu_moments_from_single_img(self, img):
-
         c1, edges, _ = self.preprocessor.get_contours(img)
 
         hu = []
