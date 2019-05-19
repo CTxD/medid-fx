@@ -9,5 +9,6 @@ class PillFeature():
     side: str
     kind: str
     strength: str
+    imprint: List[str]
     shapefeature: List[float]
     colorfeature: List[str]

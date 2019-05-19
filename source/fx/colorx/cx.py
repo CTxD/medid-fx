@@ -9,7 +9,6 @@ from sklearn import svm
 
 from .pillcolorpixels import getcolorpixels, getpillimagearray
 from ..utils import encoding2tmpfile
-from ...repository import firestore
 
 
 warnings.filterwarnings("ignore")

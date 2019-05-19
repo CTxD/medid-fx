@@ -79,12 +79,13 @@ def train():
                         side=pillobj['side'],
                         kind=pillobj['kind'],
                         strength=pillobj['strength'],
+                        imprint=pillobj['imprint'],
                         colorfeature=cf,
                         shapefeature=sf
                     ).__dict__
                 )
             except Exception:
-                failed.append(f'{pillobj["name"]}, {pillobj["kind"]} {pillobj["strength"]})
+                failed.append(f'{pillobj["name"]}, {pillobj["kind"]} {pillobj["strength"]}')
                 continue
 
     logger.info(f'Finished calculating pillfeatures for {len(pillfeatures)} pills ({len(failed)} failed)') # noqa
@@ -92,9 +93,9 @@ def train():
     # Upload model + SVM model
     model = {
         'pillfeatures': pillfeatures,
-        'svmmodel': svmmodelcontent# open(svmtmppath).read()
+        'svmmodel': svmmodelcontent
     }
-
+    
     # Upload model
     fbm.add_model(model)
 
@@ -103,48 +104,3 @@ def train():
     if failed:
         print('The following pills failed:')
         print(failed)
-
-# def parse(obj):
-#     if isinstance(obj, dict):
-#         return dicttype(obj)
-#     elif isinstance(obj, list):
-#         return listtype(obj)
-#     elif isinstance(obj, str):
-#         return obj
-#     elif isinstance(obj, bytes):
-#         return obj.decode('utf-8')
-#     else:
-#         print('Unknown parse: (Type:', type(obj), ')', obj)
-#         return obj
-
-
-# def dicttype(value):
-#     result = {}
-#     for k, v in value.items():
-#         result[k] = parse(v)
-
-#     return result
-
-
-# def listtype(value):
-#     result = []
-#     for elem in value:
-#         result.append(parse(elem))
-
-#     return result
-
-
-# def savetofile():
-#     import json
-#     allpills = fbm.get_all_pills_slim()
-#     with open('resources/allpills2.json', mode='w+') as f:
-#         allpillslist = []
-#         for pillobj in allpills:
-#             pill = {}
-#             for k, v in pillobj.items():
-#                 pill[k] = parse(v)
-
-#             allpillslist.append(pill)
-
-#         json.dump(allpillslist, f, indent=4, ensure_ascii=False)
-#         json.dump(allpills, f, indent=4)

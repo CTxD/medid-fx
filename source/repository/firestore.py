@@ -1,8 +1,9 @@
 import logging
 import uuid
 import time
+import os
+import json
 from typing import Dict, List
-from string import ascii_lowercase
 
 from firebase_admin import credentials, firestore, initialize_app
 from google.cloud.firestore import Client
@@ -51,10 +52,8 @@ class FBManager:
         return self.db.collection("pills").document(document_id).get().to_dict()
 
     def get_all_pills_slim(self):
-        # RETURN ALL PILLS FROM FILE
-        import json
-        return json.load(open('resources/allpillsslim.json'))
-        # STOP
+        if CONFIG['USELOCAL']:
+            return json.load(open('resources/allpillsslim.json'))
 
         pills = []
         unpacked_pills = self.get_all_extended_pills()
@@ -84,6 +83,13 @@ class FBManager:
         return pills
 
     def get_latest_model(self):
+        if CONFIG['USELOCAL']:
+            alldata = json.load(open('resources/model.json'))
+            return {
+                'svmmodel': bytes(alldata['svmmodel'], encoding='latin1'),
+                'pillfeatures': alldata['pillfeatures']
+            }
+
         svmmodelsnapshot = list(self.db.collection("svmmodel").get())[0]
         timestamp = svmmodelsnapshot.id
         

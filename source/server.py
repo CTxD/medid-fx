@@ -58,9 +58,3 @@ def development():
         return
 
     # ## DEVELOPMENT CODE GOES HERE ## #
-    # pillname = 'centyl_manual.jpg'
-
-    # with open(f'resources/{pillname}', mode='rb') as f:
-    #     fx.test(base64.b64encode(f.read()))
-    
-    # return
