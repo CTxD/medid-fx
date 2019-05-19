@@ -17,10 +17,22 @@ logger = logging.getLogger(__name__)
 
 def getmatches(pillrepresentation):
     fb = FBManager()
+
     s = shapex.ShapePreprocessor()
     sd = shapex.ShapeDescriptor()
     img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
     hu = sd.ShapeDescriptor(img)
+
+    model = fb.get_latest_model()
+    svmmodel = model['svmmodel']
+    with encoding2tmpfile.Encoding2TmpFile(pillrepresentation['imgstring']) as tmpfile:
+        labels = cx.getcx(tmpfile, svmmodel)
+
+    pillfeatures = model['pillfeatures']
+    # With pillfeatures, do the following (in any order):
+        # Calculate hu-moments distance
+        # Filter based on labels
+        # Filter based on imprint
 
 
 def train():

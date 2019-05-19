@@ -15,11 +15,11 @@ from ...repository import firestore
 warnings.filterwarnings("ignore")
 
 
-def getcx(imagepath: str) -> List[str]: 
+def getcx(imagepath: str, svmmodelcontent: bytes) -> List[str]: 
     svmvector = getsvmvector(imagepath)
     
-    # Fetch latest svmmodel from db and convert it to an SVC object
-    svmmodel: svm.SVC = pickle.loads(firestore.FBManager().get_latest_model()['svmmodel']) 
+    # Convert the svmmodelcontent SVC object
+    svmmodel: svm.SVC = pickle.loads(svmmodelcontent) 
     
     return svmmodel.predict([[v for _, v in svmvector.items()]]) 
 

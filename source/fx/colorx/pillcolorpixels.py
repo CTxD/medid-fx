@@ -60,15 +60,3 @@ def getcolorpixels(src: np.ndarray) -> np.ndarray:
     coloredpixels: np.ndarray = flatpixels[flatpixels[:, 0] != 0]
 
     return coloredpixels
-
-
-def grayscalecolorchannel(src: np.ndarray, channel: int):
-    result = []
-    for row in src:
-        newrow = []
-        for col in row:
-            colorvalue = col[channel]
-            newrow.append([*[np.uint8(colorvalue)]*3])
-        result.append(np.array(newrow))
-    
-    return np.array(result)
