@@ -1,1 +1,0 @@
-from .colormap_resources import three_bit_hex, three_bit_lab, six_bit_lab, six_bit_hex, eight_bit_hex, eight_bit_lab
