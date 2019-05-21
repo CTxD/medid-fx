@@ -21,7 +21,8 @@ class ShapePreprocessor:
     def load_image_from_file(self, filePath):
         try:
             img = cv.samples.findFile(filePath)
-            img = cv.imread(img, 0)
+            img = cv.imread(img)
+            
         except:
             raise Exception("Image could not be loaded from file")
         
@@ -46,30 +47,38 @@ class ShapePreprocessor:
         return img
 
     def grayscale_and_brightness(self, img):
-
-        #img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         #clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         #img = clahe.apply(img)
+
         img = cv.GaussianBlur(img, (5, 5), 0)
-        
+        img = cv.erode(img, np.ones((17, 17), np.uint8), iterations=1)
+        #img = cv.bilateralFilter(img,9,60,20)
         
         return img
     
 
     def crop_before_matching(self, imagepath, height, width):
         img = cv.imread(imagepath)
-        # tmpheight = max(height,width)
-        # tmpwidth = min(height,width)
 
-        # height = tmpheight
-        # width = tmpwidth
+        tWidth = min(width, height)
+        tHeight = max(width, height)
 
-        offset_y = height * -0.23
-        rectSize = width * 0.4
-        start_x = (width - rectSize) / 2
-        start_y = (rectSize / 2 - offset_y)+100
-        end_x = start_x + rectSize
-        end_y = start_y + rectSize - 100
+        width = tWidth
+        height = tHeight
+        if width < height:
+            offset_y = height * -0.23
+            rectSize = width * 0.4
+            start_x = (width - rectSize) / 2
+            start_y = (rectSize / 2 - offset_y)+100
+            end_x = start_x + rectSize
+            end_y = start_y + rectSize - 100
+        else:
+            offset_y = width * -0.23
+            rectSize = height * 0.4
+            start_x = (height - rectSize) / 2
+            start_y = (rectSize / 2 - offset_y)+100
+            end_x = start_x + rectSize
+            end_y = start_y + rectSize - 100
 
         print(f'H/W: {height}/{width} -- X: ({start_x}, {end_x}), Y: ({start_y}, {end_y}), offset Y: {offset_y}')
         
@@ -98,6 +107,7 @@ class ShapePreprocessor:
             height, width = lab_planes[0].shape
             lab = cv.merge(lab_planes)
             img = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
+        
 
         start_x1 = 25
         end_x1 = int(width / 2)
@@ -127,24 +137,11 @@ class ShapePreprocessor:
         return contours, edges, hierarchy
 
     def get_contours_test(self, img):
-        edges = cv.Canny(img, 100, 300)
+        edges = cv.Canny(img, 130, 260)
         contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
 
-
-        titles = ['img', 'contours']
-
-
-        from matplotlib import pyplot as plt
-        images = [img, showimg.get_contour_drawing(contours, edges, hierarchy)]
-        for i in range(len(images)): # noqa
-            plt.subplot(2, 2, i+1)
-            plt.imshow(images[i])
-            plt.title(titles[i])
-            plt.xticks([])
-            plt.yticks([])
-        plt.show()
-       
+        
         if len(contours) > 0:
             epsilon = 0.001*cv.arcLength(contours[0], True)
             approx = cv.approxPolyDP(contours[0], epsilon, True)

@@ -6,6 +6,7 @@ import pickle
 import copy
 import base64
 
+from flask import jsonify
 from .colorx import cx
 from .utils import encoding2tmpfile, promedimgsplit, showimg
 from ..repository import firestore
@@ -19,9 +20,23 @@ logger = logging.getLogger(__name__)
 
 class MatchResult():
     pillfeature: PillFeature
-    def __init__(self, prob, pf):
+    def __init__(self, prob, pf, imgstring = '', substance = ''):
         self.probability = prob
         self.pillfeature = pf
+        self.imgstring = imgstring
+        self.substance = substance
+
+    def serialize(self):
+        
+        return {
+            'probability': self.probability,
+            'imgstring': self.imgstring.decode('UTF-8'),
+            'name': self.pillfeature['name'],
+            'side': self.pillfeature['side'],
+            'substance': self.substance,
+            'kind': self.pillfeature['kind'],
+            'strength': self.pillfeature['strength'],
+        }
     
 
 
@@ -30,47 +45,45 @@ def getmatches(pillrepresentation):
 
     s = shapex.ShapePreprocessor()
     sd = shapex.ShapeDescriptor()
-    img = s.load_image_from_bytestring_and_dims(pillrepresentation['imgstring'], pillrepresentation['height'], pillrepresentation['width'])
+    #img = s.load_image_from_bytestring_and_dims(pillrepresentation['imgstring'], pillrepresentation['height'], pillrepresentation['width'])
     #img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
+    path = 'resources/20.jpg'
+    img = s.load_image_from_file(path)
     
-    huimg = s.grayscale_and_brightness(img)
+    huimg = s.grayscale_and_brightness(copy.copy(img))
     hu = sd.test_calc_hu_moments_from_single_img(huimg)
-    showimg.showimgs(['img'],[img])
     
     model = fb.get_latest_model()
     svmmodel = model['svmmodel']
 
     pillfeatures = model['pillfeatures']
 
-    print(hu)
-
 
     results = list(filter(lambda p: pillrepresentation['imprintid'] in p['imprint'], pillfeatures))
 
-    results = list(filter(lambda p: len(p['shapefeature']) == 7, results))
+    results = list(filter(lambda p: len(p['shapefeature']) == 7, results))    
+
+    labels = cx.getcx(path, svmmodel)
+
+    getPackedPill = lambda p: (fb.get_specific_pill(p['name']))    
+    getEncoding = lambda p, pacp: (next(x for x in pacp['photofeatures'] if x['strength'] == p['strength']))['imageEncoding'][0]
+
+    results = list(filter(lambda p: labels[0] in p['colorfeature'], results))
+
     
-    # Save to tmp file
-    tmpfilepath = os.path.join(os.getcwd(), str(uuid.uuid4()))
-    open(tmpfilepath + '.tmp', mode='wb').write(base64.b64decode(img))
+    mrs = list(map(lambda p: MatchResult(abs(sd.calc_cosine_similarity(hu, p['shapefeature'])), p), results))
 
-    # open tmp file
-    with open(tmpfilepath + '.tmp', mode='rb') as f:
-        with encoding2tmpfile.Encoding2TmpFile(base64.b64encode(f.read())) as tmpfile:
-            labels = cx.getcx(tmpfile, svmmodel)
+    sortedMrs = sorted(mrs, key=lambda m: m.probability, reverse=True)[:10]
 
-    os.remove(tmpfilepath + '.tmp')
+    for mr in sortedMrs:
+        packed = getPackedPill(mr.pillfeature)
+        mr.imgstring = getEncoding(mr.pillfeature, packed)
+        mr.substance = packed['substance']
+        
+    json = jsonify([r.serialize() for r in sortedMrs])
+    return json
 
-    mrs = list(map(lambda p: MatchResult(sd.calc_cosine_similarity(hu, p['shapefeature']), p), results))
 
-    sortedMrs = sorted(mrs, key=lambda m: m.probability, reverse=False)[:10]
-    print(sortedMrs[0].pillfeature['name'], sortedMrs[0].pillfeature['strength'])
-    print(sortedMrs[1].pillfeature['name'], sortedMrs[1].pillfeature['strength'])
-    print(sortedMrs[2].pillfeature['name'], sortedMrs[2].pillfeature['strength'])
-
-    # With pillfeatures, do the following (in any order):
-        # Calculate hu-moments distance
-        # Filter based on labels
-        # Filter based on imprint
 
 
 def train():

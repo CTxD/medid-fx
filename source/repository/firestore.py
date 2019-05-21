@@ -48,7 +48,6 @@ class FBManager:
         return class_dict
 
     def get_specific_pill(self, document_id: str):
-        print(self.db.collection("pills").document(document_id).get().to_dict())
         return self.db.collection("pills").document(document_id).get().to_dict()
 
     def get_all_pills_slim(self):

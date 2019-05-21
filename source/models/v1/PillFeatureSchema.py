@@ -12,3 +12,4 @@ class PillFeature():
     imprint: List[str]
     shapefeature: List[float]
     colorfeature: List[str]
+     
