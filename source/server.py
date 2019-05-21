@@ -57,4 +57,11 @@ def development():
         logger.warning('Cannot invoke development function in a non-development environment!')
         return
 
+    with open('resources/centyl.jpg', mode='rb') as f:
+        fx.getmatches(
+            {
+                'imgstring': base64.b64encode(f.read()),
+                'imprintid': 'Intet præg'
+            }
+        )
     # ## DEVELOPMENT CODE GOES HERE ## #

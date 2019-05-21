@@ -2,13 +2,13 @@
 import cv2 as cv
 import numpy as np
 
-# from ..utils import showimg
+from ..utils import showimg
 from ..shapex import ShapePreprocessor 
 
 
 def getpillimagearray(imagepath: str) -> np.ndarray:
     # Read the image (grayscaled), blur it, erode it and get the contours
-    contours, _, _ = ShapePreprocessor().get_contours(
+    contours, e, h = ShapePreprocessor().get_contours(
         cv.erode(
             cv.GaussianBlur(
                 cv.imread(imagepath, 0), 
@@ -40,7 +40,6 @@ def getpillimagearray(imagepath: str) -> np.ndarray:
     # is white
     out: np.ndarray = np.zeros_like(img) 
     out[mask == (255, 255, 255, 1)] = img[mask == (255, 255, 255, 1)]
-
     return cv.cvtColor(out, cv.COLOR_BGRA2BGR)
 
 

@@ -4,6 +4,7 @@ import base64
 
 import numpy as np
 import cv2 as cv
+from .utils import showimg
 
 from .utils import encoding2tmpfile
 
@@ -34,6 +35,46 @@ class ShapePreprocessor:
             raise Exception("Image could not be decoded from bytestring")
 
         return img
+
+    def load_image_from_bytestring_and_dims(self, imgstring, height, width):
+        try:
+            with encoding2tmpfile.Encoding2TmpFile(imgstring) as tmpimg:
+                img = self.crop_before_matching(tmpimg, height, width)
+        except:
+            raise Exception("Image could not be decoded from bytestring")
+
+        return img
+
+    def grayscale_and_brightness(self, img):
+
+        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        img = clahe.apply(img)
+        img = cv.GaussianBlur(img, (5, 5), 0)
+        
+        
+        return img
+    
+
+    def crop_before_matching(self, imagepath, height, width):
+        img = cv.imread(imagepath)
+        # tmpheight = max(height,width)
+        # tmpwidth = min(height,width)
+
+        # height = tmpheight
+        # width = tmpwidth
+
+        offset_y = height * -0.23
+        rectSize = width * 0.4
+        start_x = (width - rectSize) / 2
+        start_y = (rectSize / 2 - offset_y)+100
+        end_x = start_x + rectSize
+        end_y = start_y + rectSize - 100
+
+        print(f'H/W: {height}/{width} -- X: ({start_x}, {end_x}), Y: ({start_y}, {end_y}), offset Y: {offset_y}')
+        
+        crop_img = img[int(start_y): int(end_y), int(start_x): int(end_x)]
+        return crop_img
     
     def crop_image(self, imgpath, grayscale=True): # pragma: no cover # noqa
         """
@@ -75,8 +116,24 @@ class ShapePreprocessor:
         kernel = np.ones((7, 7), np.float32)/5
         img = cv.filter2D(img, -1, kernel)
 
-        edges = cv.Canny(img, 100, 500)
-        contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+        edges = cv.Canny(img, 100, 300)
+        contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+
+
+        titles = ['img', 'contours']
+
+
+        from matplotlib import pyplot as plt
+        images = [img, showimg.get_contour_drawing(contours, edges, hierarchy)]
+        for i in range(len(images)): # noqa
+            plt.subplot(2, 2, i+1)
+            plt.imshow(images[i])
+            plt.title(titles[i])
+            plt.xticks([])
+            plt.yticks([])
+        plt.show()
+       
         if len(contours) > 0:
             epsilon = 0.001*cv.arcLength(contours[0], True)
             approx = cv.approxPolyDP(contours[0], epsilon, True)

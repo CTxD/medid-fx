@@ -151,6 +151,12 @@ components:
         imgstring:
           type: string
           description: string of image as a binary string
+        width:
+          type: integer
+          description: width
+        height: 
+          type: integer
+          description: height
 
     DrugSchema:
       type: object

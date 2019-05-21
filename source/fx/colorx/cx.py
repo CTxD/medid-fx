@@ -67,13 +67,18 @@ def getsvmvector(imagepath: str) -> Dict[str, float]:
  
     hsvpixels = np.array([colorsys.rgb_to_hsv(pixel[0], pixel[1], pixel[2]) for pixel in imgpixels])
     hsvstddev = np.std(hsvpixels, axis=0)
-    for index, avg in enumerate(np.average(hsvpixels, axis=0)):
-        # Features 7-9; Hue, Saturaion, Value mean  
-        svmvector[f'F{index+7}'] = avg
+    hsvavg = np.average(hsvpixels, axis=0)
+    try:
+        for index, avg in enumerate(hsvavg):
+            # Features 7-9; Hue, Saturaion, Value mean  
+            svmvector[f'F{index+7}'] = avg
 
-        # Features 10-12; Std. Dev. for Hue, Saturation, and Value
-        svmvector[f'F{index+10}'] = hsvstddev[index]
-
+            # Features 10-12; Std. Dev. for Hue, Saturation, and Value
+            svmvector[f'F{index+10}'] = hsvstddev[index]
+    except Exception:
+        print(svmvector)
+        print(len(imgpixels))
+        exit()
     # Features 13-16; Red, Green, Blue, and Yellow Chromaticity mean
     rgbvalsum = sum(rgbavg)
     svmvector['F13'] = rgbavg[0]/(rgbvalsum)
