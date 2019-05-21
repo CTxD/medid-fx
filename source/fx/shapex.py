@@ -47,9 +47,9 @@ class ShapePreprocessor:
 
     def grayscale_and_brightness(self, img):
 
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        img = clahe.apply(img)
+        #img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        #clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        #img = clahe.apply(img)
         img = cv.GaussianBlur(img, (5, 5), 0)
         
         
@@ -116,6 +116,17 @@ class ShapePreprocessor:
         kernel = np.ones((7, 7), np.float32)/5
         img = cv.filter2D(img, -1, kernel)
 
+        edges = cv.Canny(img, 200, 600)
+        contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+
+       
+        if len(contours) > 0:
+            epsilon = 0.001*cv.arcLength(contours[0], True)
+            approx = cv.approxPolyDP(contours[0], epsilon, True)
+            return [approx], edges, hierarchy
+        return contours, edges, hierarchy
+
+    def get_contours_test(self, img):
         edges = cv.Canny(img, 100, 300)
         contours, hierarchy = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
@@ -140,7 +151,6 @@ class ShapePreprocessor:
             return [approx], edges, hierarchy
         return contours, edges, hierarchy
 
-
 class ShapeDescriptor:
     def __init__(self):
         self.preprocessor = ShapePreprocessor()
@@ -153,7 +163,17 @@ class ShapeDescriptor:
             hu = self.calc_hu_moments(edges)
 
         return hu 
-        
+
+    def test_calc_hu_moments_from_single_img(self, img):
+        c1, edges, _ = self.preprocessor.get_contours_test(img)
+
+        hu = []
+        if len(c1) > 0:
+            hu = self.calc_hu_moments(edges)
+
+        return hu 
+    
+
     def calc_hu_moments_from_img(self, img):
         img, snd_img = self.preprocessor.crop_image(img)
 

@@ -34,7 +34,7 @@ def getmatches(pillrepresentation):
     #img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
     
     huimg = s.grayscale_and_brightness(img)
-    hu = sd.calc_hu_moments_from_single_img(huimg)
+    hu = sd.test_calc_hu_moments_from_single_img(huimg)
     showimg.showimgs(['img'],[img])
     
     model = fb.get_latest_model()
