@@ -1,5 +1,5 @@
 import uuid
-import joblib 
+import joblib
 import os
 import logging
 import pickle
@@ -20,24 +20,27 @@ logger = logging.getLogger(__name__)
 
 class MatchResult():
     pillfeature: PillFeature
-    def __init__(self, prob, pf, imgstring = '', substance = ''):
+
+    def __init__(self, prob, pf, imgstring='', substance=''):
         self.probability = prob
         self.pillfeature = pf
         self.imgstring = imgstring
         self.substance = substance
 
     def serialize(self):
-        
-        return {
-            'probability': self.probability,
-            'imgstring': self.imgstring.decode('UTF-8'),
-            'name': self.pillfeature['name'],
-            'side': self.pillfeature['side'],
-            'substance': self.substance,
-            'kind': self.pillfeature['kind'],
-            'strength': self.pillfeature['strength'],
-        }
-    
+        try:
+            return {
+                'probability': self.probability,
+                'imgstring': self.imgstring.decode('UTF-8'),
+                'name': self.pillfeature['name'],
+                'side': self.pillfeature['side'],
+                'substance': self.substance,
+                'kind': self.pillfeature['kind'],
+                'strength': self.pillfeature['strength'],
+            }
+        except Exception:
+            print(self.pillfeature['name'])
+            print(self.imgstring)
 
 
 def getmatches(pillrepresentation):
@@ -46,44 +49,51 @@ def getmatches(pillrepresentation):
     s = shapex.ShapePreprocessor()
     sd = shapex.ShapeDescriptor()
     #img = s.load_image_from_bytestring_and_dims(pillrepresentation['imgstring'], pillrepresentation['height'], pillrepresentation['width'])
-    #img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
-    path = 'resources/20.jpg'
+    img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
+    path = 'resources/p00.jpg'
     img = s.load_image_from_file(path)
-    
+
     huimg = s.grayscale_and_brightness(copy.copy(img))
-    hu = sd.test_calc_hu_moments_from_single_img(huimg)
-    
+    hu, conts = sd.test_calc_hu_moments_from_single_img(huimg)
+
     model = fb.get_latest_model()
     svmmodel = model['svmmodel']
 
     pillfeatures = model['pillfeatures']
 
+    results = list(filter(lambda p: pillrepresentation['imprintid'] in p['imprint'] or (
+        pillrepresentation['imprintid'] == 'Tekst eller tal' and ('/resource/media/' not in p['imprint'] and 'Intet præg' not in p['imprint'])), pillfeatures))
+    results = list(filter(lambda p: len(p['shapefeature']) == 7, results))
 
-    results = list(filter(lambda p: pillrepresentation['imprintid'] in p['imprint'], pillfeatures))
-
-    results = list(filter(lambda p: len(p['shapefeature']) == 7, results))    
-
-    labels = cx.getcx(path, svmmodel)
-
-    getPackedPill = lambda p: (fb.get_specific_pill(p['name']))    
-    getEncoding = lambda p, pacp: (next(x for x in pacp['photofeatures'] if x['strength'] == p['strength']))['imageEncoding'][0]
-
+    labels = cx.getcx(path, conts, svmmodel)
     results = list(filter(lambda p: labels[0] in p['colorfeature'], results))
 
-    
-    mrs = list(map(lambda p: MatchResult(abs(sd.calc_cosine_similarity(hu, p['shapefeature'])), p), results))
+    def getPackedPill(p): return (fb.get_specific_pill(p['name']))
 
-    sortedMrs = sorted(mrs, key=lambda m: m.probability, reverse=True)[:10]
+    def getEncoding(p, pacp): return (next(
+        x for x in pacp['photofeatures'] if x['strength'] == p['strength']))['imageEncoding'][0]
+
+    mrs = list(map(lambda p: MatchResult(
+        abs(sd.calc_cosine_similarity(hu, p['shapefeature'])), p), results))
+    sortedMrs = sorted(mrs, key=lambda m: m.probability, reverse=False)[:10]
+    
 
     for mr in sortedMrs:
         packed = getPackedPill(mr.pillfeature)
+        if packed is None:
+            sortedMrs.remove(mr)
+            continue
+            
+
         mr.imgstring = getEncoding(mr.pillfeature, packed)
+        if mr.imgstring is '':    
+            sortedMrs.remove(mr)
+            continue
         mr.substance = packed['substance']
-        
+
+
     json = jsonify([r.serialize() for r in sortedMrs])
     return json
-
-
 
 
 def train():
@@ -92,7 +102,8 @@ def train():
 
     # Get list of all pills, convert the image encoding to an image, then crop image, save each
     # sides encoding and make a copy of the pillobj with each image encoding
-    logger.info('Fetching and filtering all pills (slim)')
+    logger.info(
+        'Training model started. Fetching and filtering all pills (slim)')
     allpills = []
     for pillobj in fbm.get_all_pills_slim():
         if not pillobj['image'] or isinstance(pillobj['image'][0], dict):
@@ -101,13 +112,15 @@ def train():
         pillobj['image'][0] = bytes(pillobj['image'][0], encoding='utf-8')
         allpills.extend(promedimgsplit.promedimgsplit(pillobj))
 
-    # For now, we can not handle multi-colored pills, so we filter those out. Additionally, there 
+    # For now, we can not handle multi-colored pills, so we filter those out. Additionally, there
     # exists color classifications, which are not actual colors, and these are also filtered out
     ignorecolors = ['Spættet', 'Gennemsigtig', 'Transparent']
     filteredpills = list(filter(
         lambda x: len(x['color']) == 1 and x['color'][0] not in ignorecolors,
         allpills
     ))
+
+    logger.info(f'All pills: {len(allpills)}; filtered: {len(filteredpills)}')
 
     # Train the color SVM
     logger.info('Traning color SVM on filtered pills')
@@ -117,13 +130,15 @@ def train():
     sp = shapex.ShapePreprocessor()
     pillfeatures = []
     failed = []
-    logger.info(f'Calculating pillfeature for all pills ({len(filteredpills)} pills)')
+    logger.info(
+        f'Calculating pillfeature for all pills ({len(filteredpills)} pills)')
     for pillobj in filteredpills:
         with encoding2tmpfile.Encoding2TmpFile(pillobj['image'][0]) as imgpath:
             try:
                 cf = cx.compreslabels(pillobj['color'])
-                sf = sd.calc_hu_moments_from_single_img(sp.load_image_from_file(imgpath))
-                
+                sf = sd.calc_hu_moments_from_single_img(
+                    sp.load_image_from_file(imgpath))
+
                 pillfeatures.append(
                     PillFeature(
                         name=pillobj['name'],
@@ -136,17 +151,17 @@ def train():
                     ).__dict__
                 )
             except Exception:
-                failed.append(f'{pillobj["name"]}, {pillobj["kind"]} {pillobj["strength"]}')
-                continue
+                failed.append(
+                    f'{pillobj["name"]}, {pillobj["kind"]} {pillobj["strength"]}')
 
-    logger.info(f'Finished calculating pillfeatures for {len(pillfeatures)} pills ({len(failed)} failed)') # noqa
+    logger.info(f'Finished calculating pillfeatures for {len(pillfeatures)} pills ({len(failed)} failed)')  # noqa
 
     # Upload model + SVM model
     model = {
         'pillfeatures': pillfeatures,
         'svmmodel': svmmodelcontent
     }
-    
+
     # Upload model
     fbm.add_model(model)
 
@@ -154,4 +169,6 @@ def train():
 
     if failed:
         print('The following pills failed:')
-        print(failed)
+        import json
+        print(json.dumps(failed, indent=4))
+        print(len(failed))

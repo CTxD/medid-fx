@@ -26,5 +26,5 @@ def promedimgsplit(pillobj):
             objs[side + '_pill'] = copy.deepcopy(pillobj)
             objs[side + '_pill']['image'] = [base64.b64encode(open(imgpath, mode='rb').read())]
             objs[side + '_pill']['side'] = side
-    
+
     return objs['left_pill'], objs['right_pill']

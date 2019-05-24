@@ -14,8 +14,8 @@ from ..utils import encoding2tmpfile
 warnings.filterwarnings("ignore")
 
 
-def getcx(imagepath: str, svmmodelcontent: bytes) -> List[str]: 
-    svmvector = getsvmvector(imagepath)
+def getcx(imagepath: str, conts, svmmodelcontent: bytes) -> List[str]: 
+    svmvector = getsvmvector(imagepath, conts)
     
     # Convert the svmmodelcontent SVC object
     svmmodel: svm.SVC = pickle.loads(svmmodelcontent) 
@@ -30,16 +30,19 @@ def getsvmvectors(pills: List[Dict]) -> List[Dict[str, float]]:
     for pill in pills:
         count += 1
         if count and count % 100 == 0:
-            print(count / len(pills) * 100, '%')
-
+            print(count / len(pills) * 100, '%', end='')
+            print(' -- ', len(svmvectors))
         if not pill['image'] or not pill['image'][0] or isinstance(pill['image'][0], dict):
             continue
 
         with encoding2tmpfile.Encoding2TmpFile(pill['image'][0]) as imagepath:
             try:
                 pillsvmvector = getsvmvector(imagepath)
-            except Exception:
-                pass
+            # Exceptions are raised in the pill is vertically aligned. See Adport 0.75mg e.g.
+            except ValueError:
+                continue
+            except Exception: 
+                continue
             else:
                 # For now we only handle single-color pills
                 label = compreslabels(pill['color'])[0]
@@ -50,12 +53,13 @@ def getsvmvectors(pills: List[Dict]) -> List[Dict[str, float]]:
     return svmvectors
 
 
-def getsvmvector(imagepath: str) -> Dict[str, float]:
+def getsvmvector(imagepath: str, conts) -> Dict[str, float]:
     svmvector: Dict[str, float] = {f'F{i}': 0.0 for i in range(1, 21)}
 
-    imgarray = getpillimagearray(imagepath)
+    imgarray = getpillimagearray(conts, imagepath)
     imgpixels = getcolorpixels(imgarray)
-
+    if not len(imgpixels):
+        raise ValueError('Could not extract colored pixels from the image. Perhaps no contours could be found.')
     rgbstddev = np.std(imgpixels, axis=0)
     rgbavg = np.average(imgpixels, axis=0)
     for index, avg in enumerate(rgbavg):
@@ -68,17 +72,13 @@ def getsvmvector(imagepath: str) -> Dict[str, float]:
     hsvpixels = np.array([colorsys.rgb_to_hsv(pixel[0], pixel[1], pixel[2]) for pixel in imgpixels])
     hsvstddev = np.std(hsvpixels, axis=0)
     hsvavg = np.average(hsvpixels, axis=0)
-    try:
-        for index, avg in enumerate(hsvavg):
-            # Features 7-9; Hue, Saturaion, Value mean  
-            svmvector[f'F{index+7}'] = avg
+    for index, avg in enumerate(hsvavg):
+        # Features 7-9; Hue, Saturaion, Value mean  
+        svmvector[f'F{index+7}'] = avg
 
-            # Features 10-12; Std. Dev. for Hue, Saturation, and Value
-            svmvector[f'F{index+10}'] = hsvstddev[index]
-    except Exception:
-        print(svmvector)
-        print(len(imgpixels))
-        exit()
+        # Features 10-12; Std. Dev. for Hue, Saturation, and Value
+        svmvector[f'F{index+10}'] = hsvstddev[index]
+
     # Features 13-16; Red, Green, Blue, and Yellow Chromaticity mean
     rgbvalsum = sum(rgbavg)
     svmvector['F13'] = rgbavg[0]/(rgbvalsum)
@@ -102,8 +102,8 @@ def train(pills: List[Dict]) -> svm.SVC:
 
     x = svmvectorsdf[
         [
-            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14',
-            'F15', 'F16', 'F17', 'F18', 'F19', 'F20'
+            'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 
+            'F11', 'F12', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18', 'F19', 'F20'
         ]
     ]
 
@@ -117,7 +117,7 @@ def train(pills: List[Dict]) -> svm.SVC:
 
 _labelmappings = {
     'Gul': ['Lysegul', 'Gul', 'Mørkegul'],
-    'Rød': ['Lyserød', 'Rød', 'Mørkerød'],
+    'Rød': ['Lyserød', 'Rød', 'Mørkerød', 'Rødbrun'],
     'Brun': ['Lysebrun', 'Brun', 'Mørkebrun'],
     'Grøn': ['Lysegrøn', 'Grøn', 'Mørkegrøn'],
     'Blå': ['Lysbelå', 'Blå', 'Mørkeblå'],
@@ -127,7 +127,7 @@ _labelmappings = {
     'Fersken': ['Fersken', 'Lys fersken'],
     'Lilla': ['Lilla', 'Lys lilla'],
 
-    'Rødbrun': ['Rødbrun'],
+    'Rødbrun': ['Rødbrun', 'Rød'],
     'Hvid': ['Hvid'],
     'Rosa': ['Rosa'],
     'Beige': ['Beige'],
