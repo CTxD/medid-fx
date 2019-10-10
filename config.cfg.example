@@ -58,4 +58,8 @@ DEV_PORT        = 27017
 PROD_REQPATH    = requirements/prod
 DEV_REQPATH     = requirements/dev
 
+PROD_CERT       = medid-production-certificate.json
+DEV_CERT        = medid-certificate.json
 
+DEV_USELOCAL    = True
+PROD_USELOCAL   = False
