@@ -1,11 +1,16 @@
 import os
 import logging
+import base64
 
 import connexion
 from gunicorn.app.base import BaseApplication
+import cv2 as cv
 
 from .config import CONFIG
-from .fx.colorx import cx
+from .fx import fx
+from .fx.utils import encoding2tmpfile, showimg
+from .fx.shapex import ShapePreprocessor
+
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +57,5 @@ def development():
         logger.warning('Cannot invoke development function in a non-development environment!')
         return
 
+    fx.train()
     # ## DEVELOPMENT CODE GOES HERE ## #
-    # Example:
-    # fx.extractfeatures()
-    cx.main()
-    # ## END OF DEVELOPMENT CODE ## #
-

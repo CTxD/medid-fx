@@ -1,1 +1,0 @@
-from .colormap_resources import lab_objects

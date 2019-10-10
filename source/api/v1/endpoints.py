@@ -24,8 +24,8 @@ def get_fsm():
 
 
 # Delegate for /api/v1/fx
-def fx_matches(imageencoding) -> Union[ErrorSchema, MatchSchema]: # pragma: no cover
-    return fx.getmatches(imageencoding)
+def getmatches(pillrep) -> Union[ErrorSchema, MatchSchema]: # pragma: no cover
+    return fx.getmatches(pillrep)
 
 
 # Delegate for /api/v1/medinfo/extended/{name}
@@ -44,7 +44,7 @@ def medinfo_slim() -> Union[ErrorSchema, List[SlimSchema]]:
 
 # Delegate for /api/v1/generate/{authtoken}
 def generate_model(authtoken): # pragma: no cover
-    return authtoken, 403
+    fx.train()
 
 
 # Delegate for /api/v1/meta

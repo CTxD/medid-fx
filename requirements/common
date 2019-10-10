@@ -2,5 +2,8 @@
 flask
 gunicorn
 firebase-admin
-colormath
 opencv-python
+colormath
+sklearn
+pandas
+joblib

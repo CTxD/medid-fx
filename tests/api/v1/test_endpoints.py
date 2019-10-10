@@ -1,5 +1,5 @@
 from source.api.v1 import endpoints
-from source.models.v1 import ErrorSchema
+
 
 def test_get_fsm_uninitialized(firebasemanager):
     # Hard-set the _firestore_repo to None

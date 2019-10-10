@@ -103,12 +103,15 @@ def printstatus(status: Union[str, bool]):
     sys.stdout.write(message)
     sys.stdout.flush()
 
+
 if __name__ == '__main__':
     main()  
     logger.info('Starting application.')
 
     if '--dev' in sys.argv:
-        logger.info('Note: Using -dev flag will execute code in server.development, but will NOT start the server!') # noqa
+        logger.info('Note: Using --dev flag will execute code in server.development, but will NOT start the server!') # noqa
         server.development()
     else:
         server.Server(server.createapp()).run()
+    
+    
