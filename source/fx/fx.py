@@ -50,7 +50,7 @@ def getmatches(pillrepresentation):
     sd = shapex.ShapeDescriptor()
     #img = s.load_image_from_bytestring_and_dims(pillrepresentation['imgstring'], pillrepresentation['height'], pillrepresentation['width'])
     img = s.load_image_from_bytestring(pillrepresentation['imgstring'])
-    path = 'resources/p00.jpg'
+    path = 'resources/p4.jpg'
     img = s.load_image_from_file(path)
 
     huimg = s.grayscale_and_brightness(copy.copy(img))
